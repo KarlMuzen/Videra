@@ -25,7 +25,8 @@ data class MediaItemDto(
     val title: String,
     val posterUrl: String? = null,
     val bannerUrl: String? = null,
-    val type: MediaTypeDto
+    val type: MediaTypeDto,
+    val streams: List<StreamDto> = emptyList()
 )
 
 @Serializable

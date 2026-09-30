@@ -37,8 +37,7 @@ jobs:
           gradle-version: "9.5.0"
 
       - name: Assemble Debug
-        # Added lint/test bypass, build caching, and parallel execution
-        run: gradle assembleDebug -x lint -x test --build-cache --parallel --no-daemon
+        run: ./gradlew assembleDebug -x lint -x test
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
