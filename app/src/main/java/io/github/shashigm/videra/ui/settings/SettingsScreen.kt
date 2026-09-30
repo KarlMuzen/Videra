@@ -16,12 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import io.github.shashigm.videra.data.preferences.PreferencesRepository
+import io.github.shashigm.videra.data.preferences.AppTheme
 
 @Composable
 fun SettingsScreen(
-    appTheme: String,
-    onThemeChanged: (String) -> Unit,
+    appTheme: AppTheme,
+    onThemeChanged: (AppTheme) -> Unit,
     onManageAddons: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -50,9 +50,8 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val themes = listOf(
-                    PreferencesRepository.THEME_SYSTEM to "System",
-                    PreferencesRepository.THEME_OLED_BLACK to "OLED",
-                    PreferencesRepository.THEME_VELVET_RED to "Velvet"
+                    AppTheme.VELVET_RED to "Velvet Red",
+                    AppTheme.OLED_BLACK to "OLED Black"
                 )
 
                 themes.forEachIndexed { index, (value, label) ->
