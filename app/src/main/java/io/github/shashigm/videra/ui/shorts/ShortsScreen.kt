@@ -31,10 +31,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.usecase.ShortsAddonFailure
+import io.github.shashigm.videra.ui.player.PlayerViewModel
 
 @Composable
 fun ShortsScreen(
     viewModel: ShortsViewModel,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -65,6 +67,7 @@ fun ShortsScreen(
                 items = state.feed.items,
                 failures = state.feed.failures,
                 onRefresh = viewModel::refresh,
+                playerViewModel = playerViewModel,
                 modifier = modifier
             )
         }
@@ -76,6 +79,7 @@ private fun ShortsPager(
     items: List<MediaItem>,
     failures: List<ShortsAddonFailure>,
     onRefresh: () -> Unit,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -102,7 +106,11 @@ private fun ShortsPager(
             contentPadding = PaddingValues(0.dp)
         ) { page ->
             items.getOrNull(page)?.let { item ->
-                ShortItemPage(item = item)
+                ShortItemPage(
+                    item = item,
+                    isActive = pagerState.currentPage == page,
+                    playerViewModel = playerViewModel
+                )
             }
         }
 
@@ -150,8 +158,16 @@ private fun ShortsPager(
 @Composable
 private fun ShortItemPage(
     item: MediaItem,
+    isActive: Boolean,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    LaunchedEffect(item.id, isActive) {
+        if (isActive) {
+            playerViewModel.play(item)
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -210,7 +226,7 @@ private fun ShortItemPage(
                 )
 
                 Text(
-                    text = "Playback will be connected in Phase 8.",
+                    text = "Swipe to play the selected Short.",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
