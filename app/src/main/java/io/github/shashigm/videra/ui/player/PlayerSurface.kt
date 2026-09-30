@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 
 @Composable
@@ -17,12 +18,14 @@ fun PlayerSurface(
         factory = { context ->
             PlayerView(context).apply {
                 this.player = player
-                useController = true
+                useController = false
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                 keepScreenOn = true
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
             }
         },
         onRelease = { playerView ->
+            player.clearVideoSurface()
             playerView.player = null
             playerView.keepScreenOn = false
         }

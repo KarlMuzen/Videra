@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -79,7 +79,7 @@ fun LibraryScreen(
                         )
 
                         Text(
-                            text = "Save items from Search to keep them here.",
+                            text = "Save micro-dramas from Search to keep them here.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -136,14 +136,14 @@ private fun LibraryCard(
                     contentDescription = item.mediaItem.title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(190.dp),
+                        .aspectRatio(9f / 16f),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(190.dp),
+                        .aspectRatio(9f / 16f),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -178,7 +178,7 @@ private fun LibraryCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Delete,
-                        contentDescription = "Remove from library"
+                        contentDescription = "Remove micro-drama"
                     )
                 }
             }

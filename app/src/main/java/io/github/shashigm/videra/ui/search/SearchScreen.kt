@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -67,7 +67,7 @@ fun SearchScreen(
             IconButton(onClick = viewModel::refresh) {
                 Icon(
                     imageVector = Icons.Outlined.Refresh,
-                    contentDescription = "Refresh search catalog"
+                    contentDescription = "Refresh micro-drama catalog"
                 )
             }
         }
@@ -76,7 +76,7 @@ fun SearchScreen(
             value = query,
             onValueChange = viewModel::onQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Search media") },
+            label = { Text("Search micro-dramas") },
             placeholder = { Text("Type a title") },
             singleLine = true
         )
@@ -190,14 +190,14 @@ private fun SearchResultCard(
                     contentDescription = result.mediaItem.title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(190.dp),
+                        .aspectRatio(9f / 16f),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(190.dp),
+                        .aspectRatio(9f / 16f),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -232,7 +232,7 @@ private fun SearchResultCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Bookmark,
-                        contentDescription = "Save to library"
+                        contentDescription = "Save micro-drama"
                     )
                 }
             }
@@ -273,7 +273,7 @@ private fun SearchHint(
     modifier: Modifier = Modifier
 ) {
     Text(
-        text = "Searches the media catalog exposed by all installed add-ons.",
+        text = "Searches the micro-drama catalog exposed by all installed add-ons.",
         modifier = modifier.padding(vertical = 24.dp),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -295,7 +295,7 @@ private fun SearchEmpty(
         )
 
         Text(
-            text = "No loaded media item matches “${query.trim()}”.",
+            text = "No micro-drama matches “" + query.trim() + "”.",
             style = MaterialTheme.typography.bodyMedium
         )
     }

@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import io.github.shashigm.videra.domain.model.InstalledAddon
 import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.usecase.HomeFeed
 import io.github.shashigm.videra.domain.usecase.HomeFeedSection
@@ -34,7 +35,7 @@ import io.github.shashigm.videra.domain.usecase.HomeFeedSection
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onItemClick: (MediaItem) -> Unit,
+    onItemClick: (InstalledAddon, MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -51,7 +52,7 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     onRefresh: () -> Unit,
-    onItemClick: (MediaItem) -> Unit,
+    onItemClick: (InstalledAddon, MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     when (state) {
@@ -94,7 +95,7 @@ private fun HomeContent(
 private fun HomeFeedList(
     feed: HomeFeed,
     onRefresh: () -> Unit,
-    onItemClick: (MediaItem) -> Unit,
+    onItemClick: (InstalledAddon, MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -114,7 +115,7 @@ private fun HomeFeedList(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Home",
+                    text = "Micro-Drama",
                     style = MaterialTheme.typography.headlineMedium
                 )
 
@@ -142,7 +143,7 @@ private fun HomeFeedList(
                             text = feed.failures.joinToString(
                                 separator = "\n"
                             ) { failure ->
-                                "${failure.addon.name}: ${failure.message}"
+                                failure.addon.name + ": " + failure.message
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
@@ -167,7 +168,7 @@ private fun HomeFeedList(
 @Composable
 private fun HomeFeedSectionRow(
     section: HomeFeedSection,
-    onItemClick: (MediaItem) -> Unit,
+    onItemClick: (InstalledAddon, MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -189,7 +190,9 @@ private fun HomeFeedSectionRow(
             ) { item ->
                 MediaItemCard(
                     item = item,
-                    onClick = { onItemClick(item) }
+                    onClick = {
+                        onItemClick(section.addon, item)
+                    }
                 )
             }
         }
@@ -213,14 +216,14 @@ private fun MediaItemCard(
                     contentDescription = item.title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(210.dp),
+                        .aspectRatio(9f / 16f),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(210.dp),
+                        .aspectRatio(9f / 16f),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -242,7 +245,7 @@ private fun MediaItemCard(
                 )
 
                 Text(
-                    text = item.type.name.replace('_', ' '),
+                    text = "Micro-drama",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -267,12 +270,12 @@ private fun EmptyHome(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "No home content yet",
+                text = "No micro-dramas yet",
                 style = MaterialTheme.typography.headlineSmall
             )
 
             Text(
-                text = "Install an add-on with a mediaItemsUrl in its manifest to populate Home.",
+                text = "Install an add-on with a mediaItemsUrl that exposes MICRO_DRAMA items to populate Home.",
                 style = MaterialTheme.typography.bodyMedium
             )
 

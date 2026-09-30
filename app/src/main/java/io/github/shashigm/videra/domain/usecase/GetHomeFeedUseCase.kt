@@ -3,6 +3,7 @@ package io.github.shashigm.videra.domain.usecase
 import io.github.shashigm.videra.domain.common.Resource
 import io.github.shashigm.videra.domain.model.InstalledAddon
 import io.github.shashigm.videra.domain.model.MediaItem
+import io.github.shashigm.videra.domain.model.MediaType
 import io.github.shashigm.videra.domain.repository.AddonRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -55,10 +56,14 @@ class GetHomeFeedUseCase(
                 Resource.Loading -> Unit
 
                 is Resource.Success -> {
-                    if (result.data.isNotEmpty()) {
+                    val mediaItems = result.data.filter { item ->
+                        item.type == MediaType.MICRO_DRAMA
+                    }
+
+                    if (mediaItems.isNotEmpty()) {
                         sections += HomeFeedSection(
                             addon = addon,
-                            items = result.data
+                            items = mediaItems
                         )
                     }
                 }
@@ -68,7 +73,7 @@ class GetHomeFeedUseCase(
                         addon = addon,
                         message = result.throwable.message
                             ?.takeIf { it.isNotBlank() }
-                            ?: "This add-on could not provide home content."
+                            ?: "This add-on could not provide micro-drama content."
                     )
                 }
             }
@@ -77,7 +82,7 @@ class GetHomeFeedUseCase(
         if (sections.isEmpty() && failures.size == addons.size) {
             return Resource.Error(
                 IllegalStateException(
-                    "None of the installed add-ons could provide home content."
+                    "None of the installed add-ons could provide micro-drama content."
                 )
             )
         }

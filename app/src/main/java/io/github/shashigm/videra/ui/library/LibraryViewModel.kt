@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.shashigm.videra.domain.model.InstalledAddon
 import io.github.shashigm.videra.domain.model.LibraryItem
 import io.github.shashigm.videra.domain.model.MediaItem
+import io.github.shashigm.videra.domain.model.MediaType
 import io.github.shashigm.videra.domain.repository.LibraryRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,10 +32,14 @@ class LibraryViewModel(
         repository
             .observeSavedItems()
             .map { items ->
-                if (items.isEmpty()) {
+                val microDramas = items.filter { item ->
+                    item.mediaItem.type == MediaType.MICRO_DRAMA
+                }
+
+                if (microDramas.isEmpty()) {
                     LibraryUiState.Empty
                 } else {
-                    LibraryUiState.Success(items)
+                    LibraryUiState.Success(microDramas)
                 }
             }
             .stateIn(
@@ -47,6 +52,10 @@ class LibraryViewModel(
         addon: InstalledAddon,
         mediaItem: MediaItem
     ) {
+        if (mediaItem.type != MediaType.MICRO_DRAMA) {
+            return
+        }
+
         viewModelScope.launch {
             try {
                 repository.save(
@@ -81,7 +90,7 @@ class LibraryViewModelFactory(
         }
 
         throw IllegalArgumentException(
-            "Unknown ViewModel class: ${modelClass.name}"
+            "Unknown ViewModel class: " + modelClass.name
         )
     }
 }
