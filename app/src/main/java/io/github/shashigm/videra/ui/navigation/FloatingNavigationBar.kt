@@ -3,16 +3,18 @@ package io.github.shashigm.videra.ui.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,21 +39,12 @@ fun FloatingNavigationBar(
             .fillMaxWidth()
             .navigationBarsPadding()
     ) {
-        val itemColors = NavigationBarItemDefaults.colors(
-            selectedIconColor = Color.White,
-            selectedTextColor = Color.White,
-            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f),
-            unselectedIconColor = Color.White.copy(alpha = 0.6f),
-            unselectedTextColor = Color.White.copy(alpha = 0.6f),
-            disabledIconColor = Color.White.copy(alpha = 0.38f),
-            disabledTextColor = Color.White.copy(alpha = 0.38f)
-        )
-
-
         if (feedSelected) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .height(96.dp)
+                    .align(Alignment.BottomCenter)
                     .padding(top = 8.dp)
                     .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                     .background(
@@ -66,44 +59,83 @@ fun FloatingNavigationBar(
         }
 
         Surface(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            color = if (feedSelected) {
-                Color.Transparent
-            } else {
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.82f)
-            },
-            tonalElevation = if (feedSelected) 0.dp else 3.dp
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 12.dp, bottom = 8.dp),
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surface.copy(
+                alpha = if (feedSelected) 0.92f else 0.96f
+            ),
+            tonalElevation = 6.dp
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Screen.topLevelDestinations.forEach { screen ->
                     val selected = currentDestination
                         ?.hierarchy
                         ?.any { it.route == screen.route } == true
-
-                    NavigationBarItem(
+                    CompactNavigationItem(
+                        screen = screen,
                         selected = selected,
-                        onClick = { onNavigate(screen) },
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) {
-                                    screen.filledIcon
-                                } else {
-                                    screen.outlinedIcon
-                                },
-                                contentDescription = screen.label
-                            )
-                        },
-                        label = { Text(screen.label) },
-                        colors = itemColors
+                        onClick = { onNavigate(screen) }
                     )
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun CompactNavigationItem(
+    screen: Screen,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .height(52.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)
+                } else {
+                    Color.Transparent
+                }
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = if (selected) {
+                screen.filledIcon
+            } else {
+                screen.outlinedIcon
+            },
+            contentDescription = screen.label,
+            modifier = Modifier.size(22.dp),
+            tint = if (selected) {
+                Color.White
+            } else {
+                Color.White.copy(alpha = 0.6f)
+            }
+        )
+        Text(
+            text = screen.label,
+            color = if (selected) {
+                Color.White
+            } else {
+                Color.White.copy(alpha = 0.6f)
+            },
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1
+        )
     }
 }

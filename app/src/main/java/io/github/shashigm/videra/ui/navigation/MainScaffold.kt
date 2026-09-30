@@ -84,8 +84,8 @@ fun MainScaffold(
     DisposableEffect(lifecycleOwner, playerController) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_STOP -> playerController.pauseAndClearVideoSurface()
-                Lifecycle.Event.ON_DESTROY -> playerController.release()
+                Lifecycle.Event.ON_STOP,
+                Lifecycle.Event.ON_DESTROY -> playerController.pauseAndClearVideoSurface()
                 else -> Unit
             }
         }
@@ -184,6 +184,11 @@ fun MainScaffold(
                             mediaItem = mediaItem
                         )
                         navController.navigate(Screen.Player.route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onSearchClick = {
+                        navController.navigate(Screen.Search.route) {
                             launchSingleTop = true
                         }
                     }
