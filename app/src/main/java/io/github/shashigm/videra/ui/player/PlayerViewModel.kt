@@ -2,17 +2,20 @@ package io.github.shashigm.videra.ui.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.media3.common.Player
 import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.model.Stream
 import io.github.shashigm.videra.media.player.PlayerController
+import io.github.shashigm.videra.media.player.PlayerState
+import kotlinx.coroutines.flow.StateFlow
 
 class PlayerViewModel(
     private val playerController: PlayerController
 ) : ViewModel() {
 
-    val uiState = playerController.state
+    val uiState: StateFlow<PlayerState> = playerController.state
 
-    val player = playerController.player
+    val player: Player = playerController.player
 
     fun play(
         media: MediaItem,
