@@ -61,10 +61,16 @@ class HomeViewModel(
                     Resource.Loading -> Unit
 
                     is Resource.Success -> {
-                        _uiState.value = if (result.data.sections.isEmpty()) {
-                            HomeUiState.Empty
-                        } else {
-                            HomeUiState.Success(result.data)
+                        val feed = result.data
+                        _uiState.value = when {
+                            feed.sections.isNotEmpty() ||
+                                feed.failures.isNotEmpty() -> {
+                                HomeUiState.Success(feed)
+                            }
+
+                            else -> {
+                                HomeUiState.Empty
+                            }
                         }
                     }
 
