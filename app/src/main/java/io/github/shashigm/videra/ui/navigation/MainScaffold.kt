@@ -25,6 +25,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.shashigm.videra.domain.repository.AddonRepository
+import io.github.shashigm.videra.ui.home.HomeScreen
+import io.github.shashigm.videra.ui.home.HomeViewModel
+import io.github.shashigm.videra.ui.home.HomeViewModelFactory
 import io.github.shashigm.videra.ui.settings.SettingsScreen
 import io.github.shashigm.videra.ui.settings.SettingsViewModel
 import io.github.shashigm.videra.ui.settings.SettingsViewModelFactory
@@ -40,6 +43,9 @@ fun MainScaffold(
 
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModelFactory(addonRepository)
+    )
+    val homeViewModel: HomeViewModel = viewModel(
+        factory = HomeViewModelFactory(addonRepository)
     )
 
     Scaffold(
@@ -100,7 +106,9 @@ fun MainScaffold(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) {
-                PlaceholderScreen(title = "Home")
+                HomeScreen(
+                    viewModel = homeViewModel
+                )
             }
 
             composable(Screen.Shorts.route) {
