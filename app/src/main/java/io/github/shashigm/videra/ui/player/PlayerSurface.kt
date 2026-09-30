@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 
+@OptIn(UnstableApi::class)
 @Composable
 fun PlayerSurface(
     player: Player,
@@ -20,6 +21,9 @@ fun PlayerSurface(
                 this.player = player
                 useController = false
                 resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                setKeepContentOnPlayerReset(false)
+                setShutterBackgroundColor(android.graphics.Color.BLACK)
+                setEnableComposeSurfaceSyncWorkaround(true)
                 keepScreenOn = true
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
             }

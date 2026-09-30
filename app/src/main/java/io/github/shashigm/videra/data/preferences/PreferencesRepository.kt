@@ -7,7 +7,23 @@ import kotlinx.coroutines.flow.asStateFlow
 
 enum class AppTheme {
     VELVET_RED,
-    OLED_BLACK
+    OLED_BLACK;
+
+    companion object {
+        fun parseTheme(raw: String?): AppTheme {
+            if (raw.isNullOrBlank()) {
+                return VELVET_RED
+            }
+
+            val normalized = raw
+                .trim()
+                .replace(" ", "_")
+                .uppercase()
+
+            return entries.firstOrNull { it.name == normalized }
+                ?: VELVET_RED
+        }
+    }
 }
 
 class PreferencesRepository(
@@ -42,9 +58,7 @@ class PreferencesRepository(
             ?: sharedPreferences.getString(LEGACY_KEY_APP_THEME, null)
             ?: return AppTheme.VELVET_RED
 
-        return AppTheme.entries.firstOrNull {
-            it.name.equals(raw.trim(), ignoreCase = true)
-        } ?: AppTheme.VELVET_RED
+        return AppTheme.parseTheme(raw)
     }
 
     fun setOnboardingCompleted(completed: Boolean) {

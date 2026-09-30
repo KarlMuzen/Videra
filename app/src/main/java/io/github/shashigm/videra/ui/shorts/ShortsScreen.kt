@@ -183,7 +183,7 @@ private fun ShortsPager(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Refresh,
-                    contentDescription = "Refresh Shorts",
+                    contentDescription = "Refresh feed",
                     tint = Color.White
                 )
             }
@@ -322,7 +322,7 @@ private fun ShortsError(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Shorts unavailable",
+                text = "Feed unavailable",
                 style = MaterialTheme.typography.headlineSmall
             )
 

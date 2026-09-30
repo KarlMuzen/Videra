@@ -282,7 +282,7 @@ private fun EmptyHome(
             )
 
             Text(
-                text = "Install an add-on with a mediaItemsUrl that exposes MICRO_DRAMA items to populate Home.",
+                text = "Install an add-on with a mediaItemsUrl that exposes MICRO_DRAMA items to populate Discover.",
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -310,7 +310,7 @@ private fun HomeError(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Home unavailable",
+                text = "Discover unavailable",
                 style = MaterialTheme.typography.headlineSmall
             )
 
