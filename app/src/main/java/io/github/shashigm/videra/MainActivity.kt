@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     MainScaffold(
-                        addonRepository = appContainer.addonRepository
+                        addonRepository = appContainer.addonRepository,
+                        playerController = appContainer.playerController
                     )
                 }
             }
