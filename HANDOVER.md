@@ -7,14 +7,14 @@ feature/shorts-feed
 Phase 7 — Shorts / Vertical Feed.
 
 Implemented:
-- Created `feature/shorts-feed` from the reconciled Phase 6 `main`.
+- Created `feature/shorts-feed` directly from the reconciled Phase 6 `main`.
 - Added domain-level `GetShortsFeedUseCase`.
-- Added parallel add-on fetching using `async` + `awaitAll` inside `supervisorScope`.
-- Filters fetched domain media to `MediaType.MICRO_DRAMA` only.
+- Fetches installed add-ons in parallel using `async` + `awaitAll` inside `supervisorScope`.
+- Filters returned domain media to `MediaType.MICRO_DRAMA` only.
 - Preserves successful Shorts content when another installed add-on fails.
 - Records per-add-on failures for partial-failure UI.
 - Returns a global error only when all installed add-ons fail.
-- Added `ShortsFeed` and `ShortsAddonFailure` domain models.
+- Added domain `ShortsFeed` and `ShortsAddonFailure` models.
 - Added `ShortsViewModel` with UI-safe `StateFlow<ShortsUiState>`.
 - Shorts UI states:
   - Loading
@@ -24,31 +24,34 @@ Implemented:
 - Added manual `ShortsViewModelFactory`.
 - Added `ShortsScreen` with:
   - Compose `VerticalPager`;
-  - full-screen immersive content;
+  - full-screen immersive presentation;
   - Coil 3 `AsyncImage` for user-provided artwork;
   - refresh action;
   - partial add-on failure display;
-  - empty state;
-  - error state;
-  - safe fallback when an item has no artwork.
+  - empty/error states;
+  - safe handling for missing artwork;
+  - safe handling for an empty pager edge case.
 - Updated `MainScaffold` only to:
   - create/inject `ShortsViewModel`;
   - render `ShortsScreen` in the existing Shorts destination;
-  - let Shorts use the full Scaffold content area so the pager can extend behind the existing bottom navigation layer.
-- Existing five top-level navigation destinations remain unchanged.
+  - allow the Shorts route to use the full Scaffold content area so the vertical pager can extend behind the existing bottom navigation layer.
+- Existing five top-level destinations remain unchanged.
 - Existing global mini-player / Now Playing slot remains unchanged.
-- Settings and Home behavior were not changed.
-- No provider-specific networking, scraping, player implementation, or new paging/network framework was added.
+- Settings and Home behavior remain unchanged.
+- No playback/player implementation was added; playback is intentionally deferred to Phase 8.
+- No provider-specific networking, scraping, or extraction logic was added.
+- No new paging/networking framework was added.
 - No real copyrighted titles or pirate URLs were introduced.
 
 ## Current Bugs
-No known Phase 7 static code defect remains after review.
+No known Phase 7 static code defect remains after final review.
 
 Known product boundary:
-- Shorts content is currently artwork + metadata only.
-- Playback is intentionally deferred to Phase 8 Media3 integration.
-- An add-on must return media items whose domain `type` is `MICRO_DRAMA` for them to appear in Shorts.
-- An add-on that returns no MICRO_DRAMA items is ignored for content purposes; its network failure is still surfaced when applicable.
+- Shorts currently displays user-provided artwork and metadata only.
+- Playback will be connected in Phase 8 through Media3.
+- An add-on must return media items with domain type `MICRO_DRAMA` for them to appear.
+- Add-ons that return no MICRO_DRAMA items do not create pager pages.
+- Network failures are isolated per add-on where successful content remains available.
 
 ## Pull Request
 PR #6:
@@ -63,9 +66,9 @@ PR #6:
 - No mixing independent features into one PR.
 
 ## CI Status
-The existing PR Debug APK workflow is triggered for this PR.
-Final CI status must be checked from the latest PR head after GitHub Actions completes.
-Do not call Phase 7 build-verified until that run succeeds.
+The repository's existing PR Debug APK workflow is triggered for PR #6.
+The latest PR head must be checked after GitHub Actions completes.
+Do not call Phase 7 build-verified until the latest run succeeds.
 
 ## Next Immediate Step
 Phase 8 — Media3 Integration.
