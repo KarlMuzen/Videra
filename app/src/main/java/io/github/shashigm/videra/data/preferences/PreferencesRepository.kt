@@ -28,6 +28,10 @@ class PreferencesRepository(
     )
     val onboardingCompleted: StateFlow<Boolean> = _onboardingCompleted.asStateFlow()
 
+    fun isOnboardingCompleted(): Boolean {
+        return preferences.getBoolean(KEY_ONBOARDING_COMPLETED, false)
+    }
+
     private val _appTheme = MutableStateFlow(
         normalizeTheme(preferences.getString(KEY_APP_THEME, THEME_SYSTEM))
     )
@@ -49,7 +53,7 @@ class PreferencesRepository(
     }
 
     private fun normalizeTheme(theme: String?): String {
-        return when (theme) {
+        return when (theme?.trim()) {
             THEME_OLED_BLACK -> THEME_OLED_BLACK
             THEME_VELVET_RED -> THEME_VELVET_RED
             else -> THEME_SYSTEM
