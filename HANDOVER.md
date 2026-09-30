@@ -43,8 +43,11 @@ Implemented:
 - No new paging/networking framework was added.
 - No real copyrighted titles or pirate URLs were introduced.
 
+## Build Fix
+The initial PR #6 CI run failed during Kotlin compilation because `MaterialTheme.colorScheme.onInverseSurface` was referenced in `ShortsScreen.kt`. Material 3 defines `inverseOnSurface`, not `onInverseSurface`. The invalid reference was replaced with `inverseOnSurface`.
+
 ## Current Bugs
-No known Phase 7 static code defect remains after final review.
+No known Phase 7 static code defect remains after the CI failure was fixed.
 
 Known product boundary:
 - Shorts currently displays user-provided artwork and metadata only.
@@ -66,9 +69,15 @@ PR #6:
 - No mixing independent features into one PR.
 
 ## CI Status
-The repository's existing PR Debug APK workflow is triggered for PR #6.
-The latest PR head must be checked after GitHub Actions completes.
-Do not call Phase 7 build-verified until the latest run succeeds.
+The repository's existing PR Debug APK workflow passed for the corrected PR head:
+- Workflow: `PR Debug APK`
+- Run: #12
+- Commit: `b25d17d2f81470f1f92649d3aaba950f176eb9c9`
+- Result: success
+- `Assemble Debug`: success
+- `Upload Debug APK`: success
+
+Phase 7 is build-verified at this corrected head.
 
 ## Next Immediate Step
 Phase 8 — Media3 Integration.
