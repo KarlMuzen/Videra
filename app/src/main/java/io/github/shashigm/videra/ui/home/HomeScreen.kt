@@ -9,13 +9,18 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -99,7 +104,9 @@ private fun HomeFeedList(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding(),
         contentPadding = PaddingValues(
             start = 16.dp,
             top = 20.dp,
@@ -119,8 +126,11 @@ private fun HomeFeedList(
                     style = MaterialTheme.typography.headlineMedium
                 )
 
-                Button(onClick = onRefresh) {
-                    Text("Refresh")
+                IconButton(onClick = onRefresh) {
+                    Icon(
+                        imageVector = Icons.Outlined.Refresh,
+                        contentDescription = "Refresh discover feed"
+                    )
                 }
             }
         }
@@ -275,7 +285,7 @@ private fun EmptyHome(
             )
 
             Text(
-                text = "Install an add-on with a mediaItemsUrl that exposes MICRO_DRAMA items to populate Home.",
+                text = "Install an add-on with a mediaItemsUrl that exposes MICRO_DRAMA items to populate Discover.",
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -303,7 +313,7 @@ private fun HomeError(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Home unavailable",
+                text = "Discover unavailable",
                 style = MaterialTheme.typography.headlineSmall
             )
 

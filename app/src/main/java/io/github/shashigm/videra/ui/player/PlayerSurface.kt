@@ -20,6 +20,9 @@ fun PlayerSurface(
                 this.player = player
                 useController = false
                 resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                setKeepContentOnPlayerReset(false)
+                setShutterBackgroundColor(android.graphics.Color.BLACK)
+                setEnableComposeSurfaceSyncWorkaround(true)
                 keepScreenOn = true
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
             }

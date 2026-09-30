@@ -4,34 +4,32 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.github.shashigm.videra.data.preferences.PreferencesRepository
 import io.github.shashigm.videra.domain.model.LibraryItem
 import io.github.shashigm.videra.domain.model.SearchResult
 import io.github.shashigm.videra.domain.repository.AddonRepository
 import io.github.shashigm.videra.domain.repository.EpisodeProgressRepository
 import io.github.shashigm.videra.domain.repository.LibraryRepository
+import io.github.shashigm.videra.domain.usecase.InstallAddonUseCase
 import io.github.shashigm.videra.media.player.PlayerController
 import io.github.shashigm.videra.ui.home.HomeScreen
 import io.github.shashigm.videra.ui.home.HomeViewModel
@@ -39,6 +37,9 @@ import io.github.shashigm.videra.ui.home.HomeViewModelFactory
 import io.github.shashigm.videra.ui.library.LibraryScreen
 import io.github.shashigm.videra.ui.library.LibraryViewModel
 import io.github.shashigm.videra.ui.library.LibraryViewModelFactory
+import io.github.shashigm.videra.ui.onboarding.OnboardingScreen
+import io.github.shashigm.videra.ui.onboarding.OnboardingViewModel
+import io.github.shashigm.videra.ui.onboarding.OnboardingViewModelFactory
 import io.github.shashigm.videra.ui.player.PlayerScreen
 import io.github.shashigm.videra.ui.player.PlayerViewModel
 import io.github.shashigm.videra.ui.player.PlayerViewModelFactory
@@ -56,24 +57,35 @@ import io.github.shashigm.videra.ui.shorts.ShortsViewModelFactory
 @Composable
 fun MainScaffold(
     addonRepository: AddonRepository,
+    installAddonUseCase: InstallAddonUseCase,
     episodeProgressRepository: EpisodeProgressRepository,
     libraryRepository: LibraryRepository,
     playerController: PlayerController,
+    preferencesRepository: PreferencesRepository,
     modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val startDestination = remember(preferencesRepository) {
+        if (preferencesRepository.isOnboardingCompleted()) {
+            Screen.Feed.route
+        } else {
+            Screen.Onboarding.route
+        }
+    }
+
+    val appTheme by preferencesRepository
+        .appTheme
+        .collectAsStateWithLifecycle()
+
+    val lastCrashLog by preferencesRepository
+        .lastCrashLog
+        .collectAsStateWithLifecycle()
 
     DisposableEffect(lifecycleOwner, playerController) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_STOP -> {
-                    playerController.pauseAndClearVideoSurface()
-                }
-
-                Lifecycle.Event.ON_DESTROY -> {
-                    playerController.release()
-                }
-
+                Lifecycle.Event.ON_STOP -> playerController.pauseAndClearVideoSurface()
+                Lifecycle.Event.ON_DESTROY -> playerController.release()
                 else -> Unit
             }
         }
@@ -93,11 +105,10 @@ fun MainScaffold(
             destination,
             _ ->
             val route = destination.route
-            val isVerticalPlayerRoute =
-                route == Screen.Player.route ||
-                    route == Screen.Shorts.route
+            val isVerticalRoute =
+                route == Screen.Player.route || route == Screen.Feed.route
 
-            if (!isVerticalPlayerRoute) {
+            if (!isVerticalRoute) {
                 playerController.pauseAndClearVideoSurface()
             }
         }
@@ -112,9 +123,9 @@ fun MainScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
+    val isFeedRoute = currentRoute == Screen.Feed.route
     val isPlayerRoute = currentRoute == Screen.Player.route
-    val isImmersiveRoute = isPlayerRoute ||
-        currentRoute == Screen.Shorts.route
+    val isOnboardingRoute = currentRoute == Screen.Onboarding.route
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(addonRepository)
@@ -135,65 +146,36 @@ fun MainScaffold(
             episodeProgressRepository = episodeProgressRepository
         )
     )
+    val onboardingViewModel: OnboardingViewModel = viewModel(
+        factory = OnboardingViewModelFactory(
+            preferencesRepository = preferencesRepository,
+            installAddon = installAddonUseCase
+        )
+    )
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            if (!isImmersiveRoute) {
-                NavigationBar {
-                    Screen.topLevelDestinations.forEach { screen ->
-                        val selected = currentDestination
-                            ?.hierarchy
-                            ?.any { destination ->
-                                destination.route == screen.route
-                            } == true
-
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (!selected) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(
-                                            navController.graph.startDestinationId
-                                        ) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) {
-                                        screen.filledIcon
-                                    } else {
-                                        screen.outlinedIcon
-                                    },
-                                    contentDescription = screen.label
-                                )
-                            },
-                            label = {
-                                Text(text = screen.label)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    ) { innerPadding ->
-        val navContentModifier = if (isImmersiveRoute) {
-            Modifier.fillMaxSize()
-        } else {
-            Modifier.padding(innerPadding)
-        }
-
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = navContentModifier
+            startDestination = startDestination,
+            modifier = Modifier.fillMaxSize()
         ) {
-            composable(Screen.Home.route) {
+            composable(Screen.Onboarding.route) {
+                OnboardingScreen(
+                    viewModel = onboardingViewModel,
+                    onCompleted = {
+                        navController.navigate(Screen.Feed.route) {
+                            popUpTo(Screen.Onboarding.route) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Discover.route) {
                 HomeScreen(
                     viewModel = homeViewModel,
                     onItemClick = { addon, mediaItem ->
@@ -208,7 +190,7 @@ fun MainScaffold(
                 )
             }
 
-            composable(Screen.Shorts.route) {
+            composable(Screen.Feed.route) {
                 ShortsScreen(
                     viewModel = shortsViewModel,
                     playerViewModel = playerViewModel
@@ -250,6 +232,10 @@ fun MainScaffold(
 
             composable(Screen.Settings.route) {
                 SettingsScreen(
+                    appTheme = appTheme,
+                    onThemeChanged = preferencesRepository::setTheme,
+                    lastCrashLog = lastCrashLog,
+                    onClearLogs = preferencesRepository::clearLastCrashLog,
                     onManageAddons = {
                         navController.navigate(Screen.AddonManager.route) {
                             launchSingleTop = true
@@ -264,20 +250,35 @@ fun MainScaffold(
                 )
                 AddonManagerScreen(
                     viewModel = addonManagerViewModel,
-                    onBack = {
-                        navController.popBackStack()
-                    }
+                    onBack = { navController.popBackStack() }
                 )
             }
 
             composable(Screen.Player.route) {
                 PlayerScreen(
                     viewModel = playerViewModel,
-                    onBack = {
-                        navController.popBackStack()
-                    }
+                    onBack = { navController.popBackStack() }
                 )
             }
+        }
+
+        if (!isOnboardingRoute && !isPlayerRoute) {
+            FloatingNavigationBar(
+                currentDestination = currentDestination,
+                feedSelected = isFeedRoute,
+                onNavigate = { screen ->
+                    if (screen.route != currentRoute) {
+                        navController.navigate(screen.route) {
+                            popUpTo(Screen.Feed.route) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }
