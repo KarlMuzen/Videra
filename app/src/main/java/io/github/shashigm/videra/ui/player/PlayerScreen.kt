@@ -1,6 +1,5 @@
 package io.github.shashigm.videra.ui.player
 
-import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,9 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.ui.PlayerView
 import io.github.shashigm.videra.media.player.PlayerPlaybackState
 
 @Composable
@@ -44,7 +41,7 @@ fun PlayerScreen(
     ) {
         if (state.currentMedia != null) {
             PlayerSurface(
-                viewModel = viewModel,
+                player = viewModel.player,
                 modifier = Modifier.fillMaxSize()
             )
         } else {
@@ -134,26 +131,4 @@ fun PlayerScreen(
             else -> Unit
         }
     }
-}
-
-@Composable
-private fun PlayerSurface(
-    viewModel: PlayerViewModel,
-    modifier: Modifier = Modifier
-) {
-    AndroidView(
-        modifier = modifier,
-        factory = { context ->
-            PlayerView(context).apply {
-                player = viewModel.player
-                useController = true
-                keepScreenOn = true
-                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
-            }
-        },
-        onRelease = { playerView ->
-            playerView.player = null
-            playerView.keepScreenOn = false
-        }
-    )
 }
