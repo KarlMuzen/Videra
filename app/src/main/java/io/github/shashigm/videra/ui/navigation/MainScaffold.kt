@@ -88,9 +88,6 @@ fun MainScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val addonManagerViewModel: AddonManagerViewModel = viewModel(
-        factory = AddonManagerViewModelFactory(addonRepository)
-    )
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(addonRepository)
     )
@@ -236,6 +233,9 @@ fun MainScaffold(
             }
 
             composable(Screen.AddonManager.route) {
+                val addonManagerViewModel: AddonManagerViewModel = viewModel(
+                    factory = AddonManagerViewModelFactory(addonRepository)
+                )
                 AddonManagerScreen(
                     viewModel = addonManagerViewModel,
                     onBack = {
