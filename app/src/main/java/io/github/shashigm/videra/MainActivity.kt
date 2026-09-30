@@ -8,9 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import io.github.shashigm.videra.di.VideraAppContainer
 import io.github.shashigm.videra.ui.navigation.MainScaffold
 
 class MainActivity : ComponentActivity() {
+
+    private val appContainer by lazy {
+        VideraAppContainer(applicationContext)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,7 +28,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScaffold()
+                    MainScaffold(
+                        addonRepository = appContainer.addonRepository
+                    )
                 }
             }
         }

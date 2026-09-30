@@ -1,92 +1,77 @@
 # HANDOVER.md
 
 ## Current Branch
-feature/addon-repository
+feature/addon-manager-ui
 
 ## Completed Task
-Phase 4 — Add-on Repository, Domain Mapping, Room Persistence & PR Debug APK CI.
+Phase 5 — Add-on Manager MVVM & Settings UI.
 
 Implemented:
-- Created `feature/addon-repository` from the Phase 3 `main`.
-- Added clean domain models:
-  - `MediaType`
-  - `AddonManifest`
-  - `MediaItem`
-  - `Stream`
-  - `InstalledAddon`
-- Added DTO-to-domain mapper extensions for all Phase 3 remote DTOs.
-- Added `InstalledAddonEntity` for Room persistence:
-  - `id`
-  - `name`
-  - `baseUrl`
-  - `version`
-- Added `AddonDao` with:
-  - insert/upsert
-  - delete by id
-  - `Flow<List<InstalledAddonEntity>>` observation
-- Added `VideraDatabase` Room database and manual `create(context)` factory.
-- Added `Resource<T>` sealed interface:
-  - `Loading`
-  - `Success<T>`
-  - `Error`
-- Added `AddonRepository` interface.
-- Added `AddonRepositoryImpl`.
-- Repository installation flow:
-  1. Validate base/manifest URLs.
-  2. Fetch `AddonManifestDto` through `VideraAddonApi`.
-  3. Map DTO to domain.
-  4. Persist the installed add-on endpoint metadata through `AddonDao`.
-  5. Return `Resource.Success`.
-- Cancellation is rethrown so coroutine cancellation is not converted into a normal repository error.
-- Added minimal root Gradle project scaffolding required for CI:
-  - `build.gradle.kts`
-  - `settings.gradle.kts`
-  - `gradle.properties`
-  - Android manifest retained from the Phase 1 contract.
-- Added `.github/workflows/pr-debug-build.yml`.
-- CI triggers only for `pull_request` events targeting `main`, on `opened`, `reopened`, and `synchronize`.
-- CI uses:
-  - `actions/checkout@v6`
-  - `actions/setup-java@v5`
-  - JDK 17 / Temurin
-  - `gradle/actions/setup-gradle@v6`
-  - Gradle 9.5.0
-  - `assembleDebug`
-  - `actions/upload-artifact@v4`
-- Debug APK artifact name: `videra-debug-apk`.
-- Artifact retention: 7 days.
-- No navigation or player UI work was introduced.
-- No scraper, provider-specific extractor, or real catalog integration was introduced.
+- Created `feature/addon-manager-ui` directly from merged Phase 4 `main`.
+- Added `SettingsViewModel` with:
+  - `StateFlow<List<InstalledAddon>>` for installed add-ons.
+  - `SettingsUiState` for installation progress, success, and error feedback.
+  - `SettingsEvent.InstallAddon(url)`.
+  - `SettingsEvent.RemoveAddon(id)`.
+  - HTTP/HTTPS URL validation before repository access.
+  - User-facing handling for DNS, timeout, HTTP, and invalid JSON failures.
+  - Coroutine cancellation rethrow.
+- Added manual `SettingsViewModelFactory` for repository injection.
+- Added native Material 3 `SettingsScreen`:
+  - Add-on URL TextField.
+  - Install Button.
+  - CircularProgressIndicator during installation.
+  - Inline success/error messages.
+  - Installed add-on LazyColumn.
+  - Name, status, version, and base URL display.
+  - Remove IconButton.
+  - Empty state.
+- Added `VideraAppContainer` for manual construction of:
+  - Room `VideraDatabase`.
+  - `VideraAddonApi`.
+  - `AddonRepositoryImpl`.
+- Wired the Settings destination in `MainScaffold` without changing the five top-level destinations or global mini-player slot.
+- Updated `MainActivity` to provide the repository through the app container.
+- Added `androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0` for Compose ViewModel factory access.
+- Preserved the Phase 4 Coil network artifact coordinate after diff audit.
+- No scraper, provider-specific extraction, playback, or real catalog integration was introduced.
 
 ## Current Bugs
-No known Phase 4 domain, Room, or repository logic defects.
+No known Phase 5 code defect has been observed from static diff review.
 
-Known repository/build boundary:
-- The repository did not contain root Gradle settings or a Gradle wrapper in the GitHub state inspected before Phase 4. Minimal root Gradle files were therefore added so the requested CI job has an executable project structure.
-- CI intentionally uses an installed Gradle distribution through `setup-gradle` rather than `./gradlew`, because the repository did not contain a Gradle wrapper. Gradle's official action supports this configuration through its `gradle-version` input. citeturn196047search0turn196047search1
-- AGP 9.3.x requires Gradle 9.5.0, so the workflow pins Gradle 9.5.0. citeturn464218search0turn464218search1
-- A workflow run has not been observed for the latest PR head yet. CI status must therefore be verified from the GitHub Actions run before treating the PR as build-verified.
+CI boundary:
+- PR #4 was opened against `main`.
+- GitHub Actions run #7 for the initial PR head was observed in progress.
+- This handover update changes the PR head, so the latest run must be checked after this commit. Do not treat an older run as final build verification.
 
 ## Pull Request
-PR #3:
-- `feature/addon-repository` → `main`
+PR #4:
+- `feature/addon-manager-ui` → `main`
 - Open, not merged.
 
+## Git Workflow Rule
+- `main` is the permanent integration branch.
+- One feature branch per PR.
+- At most one additional supporting branch besides `main`, only when genuinely required.
+- No unrelated feature branches.
+- No mixing independent features into one PR.
+
 ## Next Immediate Step
-Phase 5 — Add-on Manager MVVM & Settings UI.
+Phase 6 — The Home Aggregator Feed.
 
 Use this exact prompt:
 
 "Act as an Expert Android Architect.
 
-Continue Project Videra following BLUEPRINT.md and the latest HANDOVER.md. I am developing from my mobile phone, so output complete, copy-ready files only.
+Continue Project Videra following `BLUEPRINT.md` and the latest `HANDOVER.md`. I am developing from my mobile phone, so output complete, copy-ready files only.
 
-Phase 4 has been implemented on feature/addon-repository. Before starting Phase 5, assume PR #3 has been reviewed and merged into main.
+Phase 5 has been implemented on `feature/addon-manager-ui`. Before starting Phase 6, assume PR #4 has been reviewed and merged into `main`.
 
 Git workflow:
-- Create and switch to `feature/addon-manager` from `main`.
+- Create and switch to `feature/home-aggregator` from `main`.
 - Maintain the strict rule: 1 feature = 1 branch = 1 PR.
-- Do not mix playback/player implementation into this branch.
+- At most one extra supporting branch beyond `main`, only if genuinely required.
+- Do not mix playback/player implementation or unrelated settings work into this branch.
 
 Architecture constraints:
 - Dumb Frontend, Smart API.
@@ -105,7 +90,7 @@ Architecture constraints:
 - No real copyrighted catalog titles or pirate URLs.
 - Use clearly synthetic dummy data or Big Buck Bunny only.
 
-Existing Phase 3/4 components:
+Existing Phase 3/4/5 components:
 - AddonManifestDto
 - MediaTypeDto
 - MediaItemDto
@@ -118,20 +103,22 @@ Existing Phase 3/4 components:
 - VideraDatabase
 - Resource<T>
 - AddonRepository / AddonRepositoryImpl
+- SettingsViewModel
+- SettingsViewModelFactory
+- SettingsScreen
+- VideraAppContainer
 
-Phase 5 goals:
-1. Build an AddonManagerViewModel using StateFlow.
-2. Expose installed add-ons from AddonRepository as UI-safe domain models.
-3. Implement install/remove actions through the ViewModel using Resource.Loading/Success/Error.
-4. Create a Compose Add-on Manager screen under the existing Settings navigation destination.
-5. Provide an input flow for a user-provided add-on manifest URL/base URL.
-6. Display installed add-ons with name, version, endpoint status, install success/error, and remove action.
-7. Do not leak Room entities or Retrofit DTOs into Compose.
-8. Keep networking/repository logic outside the Composables.
-9. Add lightweight previews or dummy UI state without real provider content.
-10. Keep the global mini-player slot and existing navigation shell unchanged.
-11. Add focused unit-testable ViewModel/repository boundaries where practical.
+Phase 6 goals:
+1. Build the Home Aggregator Feed on top of installed user add-ons.
+2. Keep all provider/network logic behind AddonRepository or a new domain-level aggregation contract.
+3. Expose a UI-safe StateFlow for Home feed loading, success, empty, and error states.
+4. Aggregate results across multiple installed add-ons without leaking Retrofit DTOs or Room entities into Compose.
+5. Handle one failed add-on without taking down the whole feed where practical.
+6. Create the Home Compose screen using native Material 3 components and Coil 3 for images.
+7. Use only safe synthetic/dummy content until a real user-provided add-on supplies content.
+8. Preserve the existing bottom navigation and global mini-player slot.
+9. Keep Settings/Add-on Manager behavior unchanged except for shared repository wiring required by the aggregator.
+10. Add focused unit-testable aggregation boundaries where practical.
+11. Inspect the merged Phase 5 implementation on `main` before coding and preserve existing public contracts unless a concrete defect requires correction.
 
-Before writing code, inspect the merged Phase 4 implementation on main and preserve its public contracts unless a concrete compile or architectural defect requires correction.
-
-At the end, provide the updated HANDOVER.md block for the next session."
+At the end, provide the updated `HANDOVER.md` block for the next session."
