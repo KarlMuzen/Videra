@@ -2,6 +2,7 @@ package io.github.shashigm.videra.domain.usecase
 
 import io.github.shashigm.videra.domain.common.Resource
 import io.github.shashigm.videra.domain.model.InstalledAddon
+import io.github.shashigm.videra.domain.model.MediaType
 import io.github.shashigm.videra.domain.model.SearchAddonFailure
 import io.github.shashigm.videra.domain.model.SearchCatalog
 import io.github.shashigm.videra.domain.model.SearchResult
@@ -42,12 +43,16 @@ class SearchMediaUseCase(
                 Resource.Loading -> Unit
 
                 is Resource.Success -> {
-                    results += result.data.map { mediaItem ->
-                        SearchResult(
-                            addon = addon,
-                            mediaItem = mediaItem
-                        )
-                    }
+                    results += result.data
+                        .filter { mediaItem ->
+                            mediaItem.type == MediaType.MICRO_DRAMA
+                        }
+                        .map { mediaItem ->
+                            SearchResult(
+                                addon = addon,
+                                mediaItem = mediaItem
+                            )
+                        }
                 }
 
                 is Resource.Error -> {
@@ -55,7 +60,7 @@ class SearchMediaUseCase(
                         addon = addon,
                         message = result.throwable.message
                             ?.takeIf { it.isNotBlank() }
-                            ?: "This add-on could not provide searchable media."
+                            ?: "This add-on could not provide micro-drama search results."
                     )
                 }
             }
@@ -64,7 +69,7 @@ class SearchMediaUseCase(
         if (results.isEmpty() && failures.size == addons.size) {
             return Resource.Error(
                 IllegalStateException(
-                    "None of the installed add-ons could provide searchable media."
+                    "None of the installed add-ons could provide micro-drama search results."
                 )
             )
         }

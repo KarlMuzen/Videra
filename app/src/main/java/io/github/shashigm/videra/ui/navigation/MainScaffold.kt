@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +21,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,7 +39,6 @@ import io.github.shashigm.videra.ui.home.HomeViewModelFactory
 import io.github.shashigm.videra.ui.library.LibraryScreen
 import io.github.shashigm.videra.ui.library.LibraryViewModel
 import io.github.shashigm.videra.ui.library.LibraryViewModelFactory
-import io.github.shashigm.videra.ui.player.MiniPlayer
 import io.github.shashigm.videra.ui.player.PlayerScreen
 import io.github.shashigm.videra.ui.player.PlayerViewModel
 import io.github.shashigm.videra.ui.player.PlayerViewModelFactory
@@ -68,7 +67,7 @@ fun MainScaffold(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    playerController.pause()
+                    playerController.pauseAndClearVideoSurface()
                 }
 
                 Lifecycle.Event.ON_DESTROY -> {
@@ -87,18 +86,41 @@ fun MainScaffold(
     }
 
     val navController = rememberNavController()
+
+    DisposableEffect(navController, playerController) {
+        val listener = NavController.OnDestinationChangedListener {
+            _,
+            destination,
+            _ ->
+            val route = destination.route
+            val isVerticalPlayerRoute =
+                route == Screen.Player.route ||
+                    route == Screen.Shorts.route
+
+            if (!isVerticalPlayerRoute) {
+                playerController.pauseAndClearVideoSurface()
+            }
+        }
+
+        navController.addOnDestinationChangedListener(listener)
+
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+        }
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val currentRoute = currentDestination?.route
+    val isPlayerRoute = currentRoute == Screen.Player.route
+    val isImmersiveRoute = isPlayerRoute ||
+        currentRoute == Screen.Shorts.route
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(addonRepository)
     )
     val shortsViewModel: ShortsViewModel = viewModel(
-        factory = ShortsViewModelFactory(
-            repository = addonRepository,
-            playerController = playerController,
-            episodeProgressRepository = episodeProgressRepository
-        )
+        factory = ShortsViewModelFactory(addonRepository)
     )
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(addonRepository)
@@ -107,62 +129,54 @@ fun MainScaffold(
         factory = LibraryViewModelFactory(libraryRepository)
     )
     val playerViewModel: PlayerViewModel = viewModel(
-        factory = PlayerViewModelFactory(playerController)
+        factory = PlayerViewModelFactory(
+            playerController = playerController,
+            addonRepository = addonRepository,
+            episodeProgressRepository = episodeProgressRepository
+        )
     )
-
-    val isPlayerRoute = currentDestination?.route == Screen.Player.route
-    val isImmersiveRoute = isPlayerRoute ||
-        currentDestination?.route == Screen.Shorts.route
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            if (!isPlayerRoute) {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    MiniPlayer(
-                        viewModel = playerViewModel
-                    )
+            if (!isImmersiveRoute) {
+                NavigationBar {
+                    Screen.topLevelDestinations.forEach { screen ->
+                        val selected = currentDestination
+                            ?.hierarchy
+                            ?.any { destination ->
+                                destination.route == screen.route
+                            } == true
 
-                    NavigationBar {
-                        Screen.topLevelDestinations.forEach { screen ->
-                            val selected = currentDestination
-                                ?.hierarchy
-                                ?.any { destination ->
-                                    destination.route == screen.route
-                                } == true
-
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    if (!selected) {
-                                        navController.navigate(screen.route) {
-                                            popUpTo(
-                                                navController.graph.startDestinationId
-                                            ) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (!selected) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(
+                                            navController.graph.startDestinationId
+                                        ) {
+                                            saveState = true
                                         }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = if (selected) {
-                                            screen.filledIcon
-                                        } else {
-                                            screen.outlinedIcon
-                                        },
-                                        contentDescription = screen.label
-                                    )
-                                },
-                                label = {
-                                    Text(text = screen.label)
                                 }
-                            )
-                        }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) {
+                                        screen.filledIcon
+                                    } else {
+                                        screen.outlinedIcon
+                                    },
+                                    contentDescription = screen.label
+                                )
+                            },
+                            label = {
+                                Text(text = screen.label)
+                            }
+                        )
                     }
                 }
             }
@@ -182,8 +196,11 @@ fun MainScaffold(
             composable(Screen.Home.route) {
                 HomeScreen(
                     viewModel = homeViewModel,
-                    onItemClick = { item ->
-                        playerViewModel.play(item)
+                    onItemClick = { addon, mediaItem ->
+                        playerViewModel.play(
+                            addon = addon,
+                            mediaItem = mediaItem
+                        )
                         navController.navigate(Screen.Player.route) {
                             launchSingleTop = true
                         }
@@ -202,7 +219,10 @@ fun MainScaffold(
                 SearchScreen(
                     viewModel = searchViewModel,
                     onItemClick = { result: SearchResult ->
-                        playerViewModel.play(result.mediaItem)
+                        playerViewModel.play(
+                            addon = result.addon,
+                            mediaItem = result.mediaItem
+                        )
                         navController.navigate(Screen.Player.route) {
                             launchSingleTop = true
                         }
@@ -220,7 +240,7 @@ fun MainScaffold(
                 LibraryScreen(
                     viewModel = libraryViewModel,
                     onItemClick = { item: LibraryItem ->
-                        playerViewModel.play(item.mediaItem)
+                        playerViewModel.playLibraryItem(item)
                         navController.navigate(Screen.Player.route) {
                             launchSingleTop = true
                         }

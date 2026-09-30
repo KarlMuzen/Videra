@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.media3.common.MediaItem as Media3MediaItem
 import androidx.media3.common.MediaMetadata
-import androidx.media3.common.Player
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import io.github.shashigm.videra.domain.model.Episode
 import io.github.shashigm.videra.domain.model.MediaItem
@@ -90,22 +90,6 @@ class PlayerController(
     val player: Player
         get() = exoPlayer
 
-    fun play(
-        media: MediaItem,
-        stream: Stream
-    ) {
-        if (released) {
-            return
-        }
-
-        currentEpisodes = emptyList()
-        currentEpisodeIndex = null
-        handledEndedEpisodeIndex = null
-        currentMedia = media
-        currentStream = stream
-        loadCurrentStream()
-    }
-
     fun playEpisodes(
         media: MediaItem,
         startEpisodeIndex: Int = 0,
@@ -117,9 +101,10 @@ class PlayerController(
         }
 
         if (episodes.isEmpty()) {
-            play(
+            playSingle(
                 media = media,
-                stream = media.streams.firstOrNull() ?: BIG_BUCK_BUNNY_STREAM
+                stream = media.streams.firstOrNull() ?: BIG_BUCK_BUNNY_STREAM,
+                startPositionMs = startPositionMs
             )
             return
         }
@@ -130,7 +115,9 @@ class PlayerController(
         currentEpisodeIndex = safeIndex
         handledEndedEpisodeIndex = null
         currentStream = episodeStream(media, episodes[safeIndex])
-        loadCurrentStream(startPositionMs = startPositionMs.coerceAtLeast(0L))
+        loadCurrentStream(
+            startPositionMs = startPositionMs.coerceAtLeast(0L)
+        )
     }
 
     fun previousEpisode() {
@@ -153,30 +140,23 @@ class PlayerController(
         }
     }
 
-    fun togglePlayPause() {
-        if (released) {
-            return
-        }
-
-        if (exoPlayer.isPlaying) {
-            exoPlayer.pause()
-        } else {
+    fun resume() {
+        if (!released) {
             exoPlayer.play()
         }
     }
 
-    fun dismiss() {
-        if (released) {
-            return
+    fun pauseAndClearVideoSurface() {
+        if (!released) {
+            exoPlayer.pause()
+            exoPlayer.clearVideoSurface()
         }
+    }
 
-        exoPlayer.clearMediaItems()
-        currentMedia = null
-        currentStream = null
-        currentEpisodes = emptyList()
-        currentEpisodeIndex = null
-        handledEndedEpisodeIndex = null
-        _state.value = PlayerState()
+    fun clearVideoSurface() {
+        if (!released) {
+            exoPlayer.clearVideoSurface()
+        }
     }
 
     fun retry() {
@@ -190,9 +170,30 @@ class PlayerController(
             return
         }
 
-        if (currentMedia != null && currentStream != null) {
-            loadCurrentStream()
+        val media = currentMedia
+        val stream = currentStream
+        if (media != null && stream != null) {
+            playSingle(
+                media = media,
+                stream = stream,
+                startPositionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
+            )
         }
+    }
+
+    fun dismiss() {
+        if (released) {
+            return
+        }
+
+        pauseAndClearVideoSurface()
+        exoPlayer.clearMediaItems()
+        currentMedia = null
+        currentStream = null
+        currentEpisodes = emptyList()
+        currentEpisodeIndex = null
+        handledEndedEpisodeIndex = null
+        _state.value = PlayerState()
     }
 
     fun release() {
@@ -227,6 +228,21 @@ class PlayerController(
         loadCurrentStream(startPositionMs = 0L)
     }
 
+    private fun playSingle(
+        media: MediaItem,
+        stream: Stream,
+        startPositionMs: Long
+    ) {
+        currentMedia = media
+        currentEpisodes = emptyList()
+        currentEpisodeIndex = null
+        handledEndedEpisodeIndex = null
+        currentStream = stream
+        loadCurrentStream(
+            startPositionMs = startPositionMs.coerceAtLeast(0L)
+        )
+    }
+
     private fun episodeStream(
         media: MediaItem,
         episode: Episode
@@ -236,7 +252,9 @@ class PlayerController(
             ?: BIG_BUCK_BUNNY_STREAM
     }
 
-    private fun loadCurrentStream(startPositionMs: Long = 0L) {
+    private fun loadCurrentStream(
+        startPositionMs: Long = 0L
+    ) {
         val media = currentMedia ?: return
         val stream = currentStream ?: return
         val normalizedUrl = stream.url.trim()
@@ -265,7 +283,7 @@ class PlayerController(
             currentStream = stream,
             currentEpisodeIndex = currentEpisodeIndex,
             totalEpisodeCount = currentEpisodes.size,
-            currentPositionMs = 0L
+            currentPositionMs = startPositionMs.coerceAtLeast(0L)
         )
 
         val episode = currentEpisodeIndex?.let(currentEpisodes::getOrNull)
@@ -284,7 +302,11 @@ class PlayerController(
 
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
-        exoPlayer.seekTo(startPositionMs.coerceAtLeast(0L))
+
+        if (startPositionMs > 0L) {
+            exoPlayer.seekTo(startPositionMs.coerceAtLeast(0L))
+        }
+
         exoPlayer.play()
     }
 
@@ -341,6 +363,7 @@ class PlayerController(
                     PlayerPlaybackState.PAUSED
                 }
             }
+
             else -> PlayerPlaybackState.LOADING
         }
 
