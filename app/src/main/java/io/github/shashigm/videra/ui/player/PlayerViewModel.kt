@@ -58,7 +58,7 @@ class PlayerViewModel(
 
     private companion object {
         val BIG_BUCK_BUNNY_STREAM = Stream(
-            url = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
             quality = "Development test stream",
             subtitles = emptyList()
         )
@@ -76,7 +76,7 @@ class PlayerViewModelFactory(
         }
 
         throw IllegalArgumentException(
-            "Unknown ViewModel class: ${modelClass.name}"
+            "Unknown ViewModel class: \${modelClass.name}"
         )
     }
 }
