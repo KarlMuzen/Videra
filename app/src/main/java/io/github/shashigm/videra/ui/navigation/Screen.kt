@@ -54,6 +54,13 @@ sealed class Screen(
         outlinedIcon = Icons.Outlined.Settings
     )
 
+    data object AddonManager : Screen(
+        route = "settings/addons",
+        label = "Add-on Manager",
+        filledIcon = Icons.Filled.Settings,
+        outlinedIcon = Icons.Outlined.Settings
+    )
+
     data object Player : Screen(
         route = "player",
         label = "Player",

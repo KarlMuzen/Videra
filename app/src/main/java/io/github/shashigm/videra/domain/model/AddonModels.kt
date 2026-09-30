@@ -33,7 +33,12 @@ data class Stream(
 data class InstalledAddon(
     val id: String,
     val name: String,
+    val manifestName: String,
     val baseUrl: String,
+    val manifestUrl: String,
     val version: String,
-    val mediaItemsUrl: String? = null
+    val mediaItemsUrl: String? = null,
+    val customName: String? = null,
+    val enabled: Boolean = true,
+    val cachedMetadataJson: String? = null
 )

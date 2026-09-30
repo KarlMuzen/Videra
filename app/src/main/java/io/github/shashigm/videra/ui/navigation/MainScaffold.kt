@@ -45,9 +45,10 @@ import io.github.shashigm.videra.ui.player.PlayerViewModelFactory
 import io.github.shashigm.videra.ui.search.SearchScreen
 import io.github.shashigm.videra.ui.search.SearchViewModel
 import io.github.shashigm.videra.ui.search.SearchViewModelFactory
+import io.github.shashigm.videra.ui.settings.AddonManagerScreen
+import io.github.shashigm.videra.ui.settings.AddonManagerViewModel
+import io.github.shashigm.videra.ui.settings.AddonManagerViewModelFactory
 import io.github.shashigm.videra.ui.settings.SettingsScreen
-import io.github.shashigm.videra.ui.settings.SettingsViewModel
-import io.github.shashigm.videra.ui.settings.SettingsViewModelFactory
 import io.github.shashigm.videra.ui.shorts.ShortsScreen
 import io.github.shashigm.videra.ui.shorts.ShortsViewModel
 import io.github.shashigm.videra.ui.shorts.ShortsViewModelFactory
@@ -87,9 +88,6 @@ fun MainScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val settingsViewModel: SettingsViewModel = viewModel(
-        factory = SettingsViewModelFactory(addonRepository)
-    )
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(addonRepository)
     )
@@ -226,7 +224,23 @@ fun MainScaffold(
 
             composable(Screen.Settings.route) {
                 SettingsScreen(
-                    viewModel = settingsViewModel
+                    onManageAddons = {
+                        navController.navigate(Screen.AddonManager.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.AddonManager.route) {
+                val addonManagerViewModel: AddonManagerViewModel = viewModel(
+                    factory = AddonManagerViewModelFactory(addonRepository)
+                )
+                AddonManagerScreen(
+                    viewModel = addonManagerViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
                 )
             }
 

@@ -16,7 +16,7 @@ import io.github.shashigm.videra.data.local.entity.LibraryEntity
         InstalledAddonEntity::class,
         LibraryEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class VideraDatabase : RoomDatabase() {
@@ -57,6 +57,26 @@ abstract class VideraDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE installed_addons ADD COLUMN manifestUrl TEXT NOT NULL DEFAULT ''"
+                )
+                database.execSQL(
+                    "UPDATE installed_addons SET manifestUrl = baseUrl WHERE manifestUrl = ''"
+                )
+                database.execSQL(
+                    "ALTER TABLE installed_addons ADD COLUMN customName TEXT"
+                )
+                database.execSQL(
+                    "ALTER TABLE installed_addons ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1"
+                )
+                database.execSQL(
+                    "ALTER TABLE installed_addons ADD COLUMN cachedMetadataJson TEXT"
+                )
+            }
+        }
+
         fun create(context: Context): VideraDatabase {
             return Room.databaseBuilder(
                 context.applicationContext,
@@ -65,7 +85,8 @@ abstract class VideraDatabase : RoomDatabase() {
             )
                 .addMigrations(
                     MIGRATION_1_2,
-                    MIGRATION_2_3
+                    MIGRATION_2_3,
+                    MIGRATION_3_4
                 )
                 .build()
         }

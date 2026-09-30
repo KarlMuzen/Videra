@@ -4,11 +4,21 @@ import io.github.shashigm.videra.data.local.entity.InstalledAddonEntity
 import io.github.shashigm.videra.domain.model.InstalledAddon
 
 fun InstalledAddonEntity.toDomain(): InstalledAddon {
+    val effectiveName = customName
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+        ?: name
+
     return InstalledAddon(
         id = id,
-        name = name,
+        name = effectiveName,
+        manifestName = name,
         baseUrl = baseUrl,
+        manifestUrl = manifestUrl,
         version = version,
-        mediaItemsUrl = mediaItemsUrl
+        mediaItemsUrl = mediaItemsUrl,
+        customName = customName,
+        enabled = enabled,
+        cachedMetadataJson = cachedMetadataJson
     )
 }

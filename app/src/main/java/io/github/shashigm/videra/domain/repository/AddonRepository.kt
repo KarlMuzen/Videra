@@ -10,6 +10,8 @@ interface AddonRepository {
 
     fun observeInstalledAddons(): Flow<List<InstalledAddon>>
 
+    fun observeEnabledAddons(): Flow<List<InstalledAddon>>
+
     suspend fun installAddon(
         baseUrl: String,
         manifestUrl: String = baseUrl
@@ -18,6 +20,16 @@ interface AddonRepository {
     suspend fun getMediaItems(
         addon: InstalledAddon
     ): Resource<List<MediaItem>>
+
+    suspend fun setAddonEnabled(
+        addonId: String,
+        enabled: Boolean
+    )
+
+    suspend fun setCustomName(
+        addonId: String,
+        customName: String?
+    )
 
     suspend fun removeAddon(addonId: String)
 }
