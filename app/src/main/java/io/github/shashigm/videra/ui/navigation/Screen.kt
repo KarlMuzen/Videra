@@ -19,16 +19,16 @@ sealed class Screen(
     val filledIcon: ImageVector,
     val outlinedIcon: ImageVector
 ) {
-    data object Home : Screen(
-        route = "home",
-        label = "Home",
+    data object Discover : Screen(
+        route = "discover",
+        label = "Discover",
         filledIcon = Icons.Filled.Home,
         outlinedIcon = Icons.Outlined.Home
     )
 
-    data object Shorts : Screen(
-        route = "shorts",
-        label = "Shorts",
+    data object Feed : Screen(
+        route = "feed",
+        label = "Feed",
         filledIcon = Icons.Filled.SmartDisplay,
         outlinedIcon = Icons.Outlined.SmartDisplay
     )
@@ -68,10 +68,17 @@ sealed class Screen(
         outlinedIcon = Icons.Outlined.SmartDisplay
     )
 
+    data object Onboarding : Screen(
+        route = "onboarding",
+        label = "Onboarding",
+        filledIcon = Icons.Filled.Home,
+        outlinedIcon = Icons.Outlined.Home
+    )
+
     companion object {
         val topLevelDestinations: List<Screen> = listOf(
-            Home,
-            Shorts,
+            Discover,
+            Feed,
             Search,
             Library,
             Settings
