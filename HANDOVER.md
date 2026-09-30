@@ -75,6 +75,9 @@ Verified against current Android/Media3 documentation:
 PR #7:
 - `feature/media3-player` -> `main`
 - Open, not merged.
+- Current PR head: `325c9750ecf2fb901eebb4f1e80bb16c9835c641`
+- Current `main`: `f3746992ab0aa6b1fd317d8fc27c2cb98aa7fa62`
+- Feature branch is 0 commits behind `main`.
 - Phase 7 PR #6 was merged before Phase 8 work.
 - `main` also contains a separate workflow-only update commit (`f3746992ab0aa6b1fd317d8fc27c2cb98aa7fa62`); the Phase 8 branch intentionally keeps the requested exact workflow command.
 
@@ -85,8 +88,16 @@ PR #7:
 - No mixing independent features into one PR.
 
 ## CI Status
-The Phase 8 PR CI result must be checked against the latest feature-branch head after this handover commit.
-Do not call Phase 8 build-verified until that latest run succeeds.
+Latest PR Debug APK verification:
+- Workflow: PR Debug APK
+- Run: #18
+- Tested PR head: `325c9750ecf2fb901eebb4f1e80bb16c9835c641`
+- Result: success
+- Assemble Debug: success
+- Upload Debug APK: success
+- Lint and tests were explicitly excluded by the workflow command as requested.
+
+Phase 8 is build-verified at the current validated head.
 
 ## Next Immediate Step
-Phase 9 — Continue according to the latest `BLUEPRINT.md` and update `HANDOVER.md` before handing off the next session.
+Phase 9 — Continue according to the latest `BLUEPRINT.md`; preserve the one-player architecture and verify real add-on stream playback on a physical Android device before adding more playback features.
