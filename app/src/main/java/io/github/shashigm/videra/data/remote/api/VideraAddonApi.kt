@@ -1,6 +1,6 @@
 package io.github.shashigm.videra.data.remote.api
 
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import io.github.shashigm.videra.data.remote.dto.AddonManifestDto
 import io.github.shashigm.videra.data.remote.dto.MediaItemDto
 import io.github.shashigm.videra.data.remote.dto.StreamDto
