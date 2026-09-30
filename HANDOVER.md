@@ -1,65 +1,58 @@
 # HANDOVER.md
 
 ## Current Branch
-feature/home-aggregator
+feature/shorts-feed
 
 ## Completed Task
-Phase 6 — Home Aggregator Feed.
+Phase 7 — Shorts / Vertical Feed.
 
 Implemented:
-- Created `feature/home-aggregator` directly from merged Phase 5 `main`.
-- Extended the add-on manifest contract with optional `mediaItemsUrl`.
-- Extended domain `AddonManifest` and `InstalledAddon` models with optional `mediaItemsUrl`.
-- Extended `InstalledAddonEntity` with nullable `mediaItemsUrl`.
-- Added Room migration `1 -> 2` for the new nullable media endpoint column.
-- Updated `AddonRepositoryImpl` to:
-  - validate add-on URLs;
-  - resolve relative `mediaItemsUrl` values against the manifest URL;
-  - persist the resolved media endpoint;
-  - expose `getMediaItems(InstalledAddon)`;
-  - map media DTOs into domain models;
-  - preserve coroutine cancellation.
-- Added `GetHomeFeedUseCase` as the domain aggregation boundary.
-- Aggregation behavior:
-  - reads all installed add-ons;
-  - launches one `async` request per add-on;
-  - uses `supervisorScope` so one failed add-on does not cancel successful siblings;
-  - keeps successful non-empty sections;
-  - records per-add-on failures for partial-failure UI;
-  - returns a global error only when every installed add-on fails.
-- Added `HomeViewModel` with UI-safe `StateFlow<HomeUiState>`.
-- Home states:
+- Created `feature/shorts-feed` from the reconciled Phase 6 `main`.
+- Added domain-level `GetShortsFeedUseCase`.
+- Added parallel add-on fetching using `async` + `awaitAll` inside `supervisorScope`.
+- Filters fetched domain media to `MediaType.MICRO_DRAMA` only.
+- Preserves successful Shorts content when another installed add-on fails.
+- Records per-add-on failures for partial-failure UI.
+- Returns a global error only when all installed add-ons fail.
+- Added `ShortsFeed` and `ShortsAddonFailure` domain models.
+- Added `ShortsViewModel` with UI-safe `StateFlow<ShortsUiState>`.
+- Shorts UI states:
   - Loading
   - Empty
   - Success
   - Error
-- Home automatically refreshes when installed add-ons change and also supports manual refresh.
-- Added manual `HomeViewModelFactory`.
-- Added native Material 3 `HomeScreen`:
-  - top-level Home header;
+- Added manual `ShortsViewModelFactory`.
+- Added `ShortsScreen` with:
+  - Compose `VerticalPager`;
+  - full-screen immersive content;
+  - Coil 3 `AsyncImage` for user-provided artwork;
   - refresh action;
-  - partial-failure warning;
-  - `LazyColumn` containing one `LazyRow` per installed add-on;
-  - media cards;
-  - Coil 3 `AsyncImage`;
-  - empty/error/loading states.
-- Updated `MainScaffold` only enough to inject and render `HomeViewModel` for the existing Home destination.
-- Preserved the existing five-tab navigation and global mini-player slot.
-- No playback/player implementation, scraper, provider-specific extraction, or real catalog integration was added.
-- No Room entities or Retrofit DTOs are exposed to Compose.
+  - partial add-on failure display;
+  - empty state;
+  - error state;
+  - safe fallback when an item has no artwork.
+- Updated `MainScaffold` only to:
+  - create/inject `ShortsViewModel`;
+  - render `ShortsScreen` in the existing Shorts destination;
+  - let Shorts use the full Scaffold content area so the pager can extend behind the existing bottom navigation layer.
+- Existing five top-level navigation destinations remain unchanged.
+- Existing global mini-player / Now Playing slot remains unchanged.
+- Settings and Home behavior were not changed.
+- No provider-specific networking, scraping, player implementation, or new paging/network framework was added.
+- No real copyrighted titles or pirate URLs were introduced.
 
-## Current Bugs / Known Boundary
-No known Phase 6 static code defect remains after diff review.
+## Current Bugs
+No known Phase 7 static code defect remains after review.
 
-Important compatibility boundary:
-- The Phase 3 manifest contract did not originally define a catalog endpoint.
-- Phase 6 therefore adds optional `mediaItemsUrl` to the manifest contract and persists it through Room migration 1 -> 2.
-- Existing installed add-ons created before this migration will have a null `mediaItemsUrl`. They need to be reinstalled from a manifest that supplies `mediaItemsUrl` before Home can fetch their media catalog.
-- Home does not invent provider-specific endpoint paths.
+Known product boundary:
+- Shorts content is currently artwork + metadata only.
+- Playback is intentionally deferred to Phase 8 Media3 integration.
+- An add-on must return media items whose domain `type` is `MICRO_DRAMA` for them to appear in Shorts.
+- An add-on that returns no MICRO_DRAMA items is ignored for content purposes; its network failure is still surfaced when applicable.
 
 ## Pull Request
-PR #5:
-- `feature/home-aggregator` -> `main`
+PR #6:
+- `feature/shorts-feed` -> `main`
 - Open, not merged.
 
 ## Git Workflow Rule
@@ -70,11 +63,12 @@ PR #5:
 - No mixing independent features into one PR.
 
 ## CI Status
-The PR workflow is triggered by the repository's existing PR Debug APK workflow.
-The latest run must be checked after the final PR head is created before treating Phase 6 as build-verified.
+The existing PR Debug APK workflow is triggered for this PR.
+Final CI status must be checked from the latest PR head after GitHub Actions completes.
+Do not call Phase 7 build-verified until that run succeeds.
 
 ## Next Immediate Step
-Phase 7 — The Shorts / Vertical Feed.
+Phase 8 — Media3 Integration.
 
 Use this exact prompt:
 
@@ -82,13 +76,14 @@ Use this exact prompt:
 
 Continue Project Videra following `BLUEPRINT.md` and the latest `HANDOVER.md`. I am developing from my mobile phone, so output complete, copy-ready files only.
 
-Phase 6 has been implemented on `feature/home-aggregator`. Before starting Phase 7, assume PR #5 has been reviewed and merged into `main`.
+Phase 7 has been implemented on `feature/shorts-feed`. Before starting Phase 8, assume PR #6 has been reviewed and merged into `main`.
 
 Git workflow:
-- Create and switch to `feature/shorts-feed` from `main`.
+- Create and switch to `feature/media3-player` from `main`.
 - Maintain the strict rule: 1 feature = 1 branch = 1 PR.
 - At most one extra supporting branch beyond `main`, only if genuinely required.
-- Do not mix player implementation or unrelated settings/home work into this branch.
+- Do not mix unrelated Home, Shorts, or Settings features into this branch.
+- Automatically open one PR to `main` on completion.
 
 Architecture constraints:
 - Dumb Frontend, Smart API.
@@ -105,10 +100,10 @@ Architecture constraints:
 - No Hilt/Dagger.
 - No Gson/Moshi.
 - No real copyrighted catalog titles or pirate URLs.
-- Use clearly synthetic dummy data or Big Buck Bunny only.
+- Use clearly synthetic/dummy data or Big Buck Bunny only.
 
 Existing components:
-- AddonManifestDto with optional `mediaItemsUrl`
+- AddonManifestDto
 - MediaTypeDto
 - MediaItemDto
 - StreamDto
@@ -128,19 +123,23 @@ Existing components:
 - HomeViewModel
 - HomeViewModelFactory
 - HomeScreen
+- GetShortsFeedUseCase
+- ShortsViewModel
+- ShortsViewModelFactory
+- ShortsScreen
 
-Phase 7 goals:
-1. Build the Shorts / vertical feed on top of installed user add-ons.
-2. Reuse the existing repository/domain boundaries instead of adding provider-specific networking to Compose.
-3. Expose a UI-safe StateFlow for vertical-feed loading, content, empty, and error states.
-4. Fetch content across eligible installed add-ons in parallel where appropriate.
-5. Handle partial add-on failures without crashing or blanking the entire feed when successful content exists.
-6. Create a Compose vertical paging/feed experience using native Material 3 components and Coil 3.
-7. Keep the global mini-player slot and top-level navigation unchanged.
-8. Do not modify Settings behavior except for unavoidable shared repository/domain changes.
-9. Avoid introducing a new paging/networking framework unless a concrete requirement justifies it.
-10. Use only safe synthetic/dummy content until a real user-provided add-on supplies content.
-11. Add focused unit-testable boundaries where practical.
-12. Inspect the merged Phase 6 implementation on `main` before coding and preserve existing public contracts unless a concrete compile or architectural defect requires correction.
+Phase 8 goals:
+1. Integrate AndroidX Media3 / ExoPlayer for user-provided stream playback.
+2. Keep playback orchestration behind a ViewModel/use-case boundary rather than embedding business logic in Composables.
+3. Expose UI-safe player state through StateFlow.
+4. Support a selected `Stream` from an existing `MediaItem` without adding provider-specific extraction.
+5. Build a reusable Compose player surface using Media3 UI components.
+6. Preserve the global mini-player / Now Playing slot architecture.
+7. Avoid introducing a second player engine or unnecessary playback framework.
+8. Handle playback errors, loading, buffering, and release lifecycle correctly.
+9. Keep Home, Shorts, and Settings behavior unchanged except for the minimum wiring needed to launch playback.
+10. Use only safe synthetic streams or Big Buck Bunny for development/testing until a real user add-on supplies a stream.
+11. Inspect the merged Phase 7 implementation on `main` before coding and preserve existing public contracts unless a concrete compile or architectural defect requires correction.
+12. Add focused testable boundaries where practical.
 
 At the end, provide the updated `HANDOVER.md` block for the next session."
