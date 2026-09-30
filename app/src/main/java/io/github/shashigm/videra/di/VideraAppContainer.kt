@@ -4,8 +4,10 @@ import android.content.Context
 import io.github.shashigm.videra.data.local.database.VideraDatabase
 import io.github.shashigm.videra.data.remote.api.VideraAddonApi
 import io.github.shashigm.videra.data.repository.AddonRepositoryImpl
+import io.github.shashigm.videra.data.repository.EpisodeProgressRepositoryImpl
 import io.github.shashigm.videra.data.repository.LibraryRepositoryImpl
 import io.github.shashigm.videra.domain.repository.AddonRepository
+import io.github.shashigm.videra.domain.repository.EpisodeProgressRepository
 import io.github.shashigm.videra.domain.repository.LibraryRepository
 import io.github.shashigm.videra.media.player.PlayerController
 
@@ -22,6 +24,12 @@ class VideraAppContainer(
         AddonRepositoryImpl(
             api = api,
             addonDao = database.addonDao()
+        )
+    }
+
+    val episodeProgressRepository: EpisodeProgressRepository by lazy {
+        EpisodeProgressRepositoryImpl(
+            dao = database.episodeProgressDao()
         )
     }
 
