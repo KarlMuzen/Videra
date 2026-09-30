@@ -27,15 +27,24 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.github.shashigm.videra.domain.model.LibraryItem
+import io.github.shashigm.videra.domain.model.SearchResult
 import io.github.shashigm.videra.domain.repository.AddonRepository
+import io.github.shashigm.videra.domain.repository.LibraryRepository
 import io.github.shashigm.videra.media.player.PlayerController
 import io.github.shashigm.videra.ui.home.HomeScreen
 import io.github.shashigm.videra.ui.home.HomeViewModel
 import io.github.shashigm.videra.ui.home.HomeViewModelFactory
+import io.github.shashigm.videra.ui.library.LibraryScreen
+import io.github.shashigm.videra.ui.library.LibraryViewModel
+import io.github.shashigm.videra.ui.library.LibraryViewModelFactory
 import io.github.shashigm.videra.ui.player.MiniPlayer
 import io.github.shashigm.videra.ui.player.PlayerScreen
 import io.github.shashigm.videra.ui.player.PlayerViewModel
 import io.github.shashigm.videra.ui.player.PlayerViewModelFactory
+import io.github.shashigm.videra.ui.search.SearchScreen
+import io.github.shashigm.videra.ui.search.SearchViewModel
+import io.github.shashigm.videra.ui.search.SearchViewModelFactory
 import io.github.shashigm.videra.ui.settings.SettingsScreen
 import io.github.shashigm.videra.ui.settings.SettingsViewModel
 import io.github.shashigm.videra.ui.settings.SettingsViewModelFactory
@@ -46,6 +55,7 @@ import io.github.shashigm.videra.ui.shorts.ShortsViewModelFactory
 @Composable
 fun MainScaffold(
     addonRepository: AddonRepository,
+    libraryRepository: LibraryRepository,
     playerController: PlayerController,
     modifier: Modifier = Modifier
 ) {
@@ -85,6 +95,12 @@ fun MainScaffold(
     )
     val shortsViewModel: ShortsViewModel = viewModel(
         factory = ShortsViewModelFactory(addonRepository)
+    )
+    val searchViewModel: SearchViewModel = viewModel(
+        factory = SearchViewModelFactory(addonRepository)
+    )
+    val libraryViewModel: LibraryViewModel = viewModel(
+        factory = LibraryViewModelFactory(libraryRepository)
     )
     val playerViewModel: PlayerViewModel = viewModel(
         factory = PlayerViewModelFactory(playerController)
@@ -179,11 +195,33 @@ fun MainScaffold(
             }
 
             composable(Screen.Search.route) {
-                PlaceholderScreen(title = "Search")
+                SearchScreen(
+                    viewModel = searchViewModel,
+                    onItemClick = { result: SearchResult ->
+                        playerViewModel.play(result.mediaItem)
+                        navController.navigate(Screen.Player.route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onSaveItem = { result ->
+                        libraryViewModel.save(
+                            addon = result.addon,
+                            mediaItem = result.mediaItem
+                        )
+                    }
+                )
             }
 
             composable(Screen.Library.route) {
-                PlaceholderScreen(title = "Library")
+                LibraryScreen(
+                    viewModel = libraryViewModel,
+                    onItemClick = { item: LibraryItem ->
+                        playerViewModel.play(item.mediaItem)
+                        navController.navigate(Screen.Player.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
 
             composable(Screen.Settings.route) {
