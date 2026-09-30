@@ -33,7 +33,10 @@ data class ShortsAddonFailure(
 
 sealed interface ShortsUiState {
     data object Loading : ShortsUiState
-    data object Empty : ShortsUiState
+
+    data class Empty(
+        val failures: List<ShortsAddonFailure> = emptyList()
+    ) : ShortsUiState
 
     data class Success(
         val feed: ShortsFeed
@@ -147,14 +150,18 @@ class ShortsViewModel(
                     Resource.Loading -> Unit
 
                     is Resource.Success -> {
+                        val feed = result.data
                         _uiState.value = when {
-                            result.data.items.isNotEmpty() ||
-                                result.data.failures.isNotEmpty() -> {
-                                ShortsUiState.Success(result.data)
+                            feed.items.isNotEmpty() -> {
+                                ShortsUiState.Success(feed)
+                            }
+
+                            feed.failures.isNotEmpty() -> {
+                                ShortsUiState.Empty(feed.failures)
                             }
 
                             else -> {
-                                ShortsUiState.Empty
+                                ShortsUiState.Empty()
                             }
                         }
                     }
@@ -181,9 +188,7 @@ class ShortsViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(
-        modelClass: Class<T>
-    ): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ShortsViewModel::class.java)) {
             return ShortsViewModel(repository) as T
         }

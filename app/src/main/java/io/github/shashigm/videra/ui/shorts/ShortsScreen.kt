@@ -5,13 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
@@ -44,8 +43,9 @@ fun ShortsScreen(
             ShortsLoading(modifier)
         }
 
-        ShortsUiState.Empty -> {
+        is ShortsUiState.Empty -> {
             ShortsEmpty(
+                failures = state.failures,
                 onRefresh = viewModel::refresh,
                 modifier = modifier
             )
@@ -85,7 +85,7 @@ private fun ShortsPager(
     LaunchedEffect(items.size) {
         if (items.isNotEmpty()) {
             pagerState.scrollToPage(
-                page = pagerState.currentPage.coerceAtMost(items.lastIndex)
+                pagerState.currentPage.coerceAtMost(items.lastIndex)
             )
         }
     }
@@ -100,9 +100,9 @@ private fun ShortsPager(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(0.dp)
         ) { page ->
-            ShortItemPage(
-                item = items[page]
-            )
+            items.getOrNull(page)?.let { item ->
+                ShortItemPage(item = item)
+            }
         }
 
         Column(
@@ -185,8 +185,8 @@ private fun ShortItemPage(
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
                 .padding(16.dp),
-            color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.62f),
-            contentColor = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.inverseSurface,
+            contentColor = MaterialTheme.colorScheme.onInverseSurface
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -205,9 +205,7 @@ private fun ShortItemPage(
                 )
 
                 Spacer(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(2.dp)
+                    modifier = Modifier.height(2.dp)
                 )
 
                 Text(
@@ -235,6 +233,7 @@ private fun ShortsLoading(
 
 @Composable
 private fun ShortsEmpty(
+    failures: List<ShortsAddonFailure>,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -250,14 +249,39 @@ private fun ShortsEmpty(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "No Shorts yet",
+                text = if (failures.isEmpty()) {
+                    "No Shorts yet"
+                } else {
+                    "No Shorts available"
+                },
                 style = MaterialTheme.typography.headlineSmall
             )
 
             Text(
-                text = "Install an add-on that returns MICRO_DRAMA media items to populate this feed.",
+                text = if (failures.isEmpty()) {
+                    "Install an add-on that returns MICRO_DRAMA media items to populate this feed."
+                } else {
+                    "No MICRO_DRAMA items were returned. Some add-ons also failed."
+                },
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            if (failures.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = failures.joinToString(
+                            separator = "\n"
+                        ) { failure ->
+                            failure.addon.name + ": " + failure.message
+                        },
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
 
             Button(onClick = onRefresh) {
                 Text("Refresh")
