@@ -47,9 +47,9 @@ class SearchViewModel(
         Resource.Loading
     )
 
-    private val installedAddons: StateFlow<List<InstalledAddon>> =
+    private val enabledAddons: StateFlow<List<InstalledAddon>> =
         repository
-            .observeInstalledAddons()
+            .observeEnabledAddons()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -96,7 +96,7 @@ class SearchViewModel(
 
     init {
         viewModelScope.launch {
-            combine(installedAddons, refreshKey) { addons, _ ->
+            combine(enabledAddons, refreshKey) { addons, _ ->
                 addons
             }.collectLatest { addons ->
                 catalog.value = Resource.Loading
@@ -132,7 +132,7 @@ class SearchViewModelFactory(
         }
 
         throw IllegalArgumentException(
-            "Unknown ViewModel class: ${modelClass.name}"
+            "Unknown ViewModel class: " + modelClass.name
         )
     }
 }
