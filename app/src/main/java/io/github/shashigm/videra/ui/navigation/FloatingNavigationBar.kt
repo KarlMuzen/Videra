@@ -42,14 +42,14 @@ fun FloatingNavigationBar(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(96.dp)
+                    .height(100.dp)
                     .align(Alignment.BottomCenter)
                     .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                     .background(
                         Brush.verticalGradient(
                             listOf(
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.46f)
+                                Color.Black.copy(alpha = 0.55f)
                             )
                         )
                     )
