@@ -76,7 +76,7 @@ class PlayerViewModelFactory(
         }
 
         throw IllegalArgumentException(
-            "Unknown ViewModel class: \${modelClass.name}"
+            "Unknown ViewModel class: ${modelClass.name}"
         )
     }
 }
