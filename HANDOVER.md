@@ -50,7 +50,8 @@ Implemented:
 - CI Run #17: Kotlin compilation failed on a missing `androidx.compose.ui.unit.dp` import in `MainScaffold.kt`. Added the import.
 - CI Run #18: full debug assembly and APK upload passed.
 - CI Run #19: documentation synchronization build passed.
-- CI Run #20: final handover synchronization build passed.
+- CI Run #20: final application-and-handover synchronization build passed.
+- CI Run #21: final handover synchronization build passed.
 
 ## CI Workflow
 Updated `.github/workflows/pr-debug-build.yml`:
@@ -87,7 +88,7 @@ Verified against current Android/Media3 documentation:
 PR #7:
 - `feature/media3-player` -> `main`
 - Open, not merged.
-- Current PR head: `696ce743969811d2db21e9011a770265770e1a1d`
+- Current PR head: `0fedafb7c20a296777a8bb5f674739f8d7ef1f01`
 - Current `main`: `f3746992ab0aa6b1fd317d8fc27c2cb98aa7fa62`
 - Feature branch is 0 commits behind `main`.
 - Phase 7 PR #6 was merged before Phase 8 work.
