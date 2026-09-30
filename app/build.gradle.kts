@@ -76,4 +76,8 @@ dependencies {
 
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.10.2")
+
+    // OkHttp for dynamic add-on networking and failover interception.
+    // 4.12.0 matches the OkHttp version used by Retrofit 3.0.0.
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
