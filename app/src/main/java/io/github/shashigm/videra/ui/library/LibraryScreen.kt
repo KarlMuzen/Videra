@@ -1,5 +1,6 @@
 package io.github.shashigm.videra.ui.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ fun LibraryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .padding(horizontal = 16.dp)
     ) {
@@ -81,7 +83,7 @@ fun LibraryScreen(
                         )
 
                         Text(
-                            text = "Save micro-dramas from Search to keep them here.",
+                            text = "Save micro-dramas from Discover or Search to keep them here.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

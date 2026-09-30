@@ -51,8 +51,9 @@ sealed interface PlayerEvent {
 class PlayerController(
     context: Context
 ) {
-    private val exoPlayer: ExoPlayer =
-        ExoPlayer.Builder(context.applicationContext).build()
+    private val applicationContext = context.applicationContext
+
+    private var exoPlayer: ExoPlayer = createExoPlayer()
 
     private val _state = MutableStateFlow(PlayerState())
     val state: StateFlow<PlayerState> = _state.asStateFlow()
@@ -97,7 +98,7 @@ class PlayerController(
         startPositionMs: Long = 0L
     ) {
         if (released) {
-            return
+            reinitializePlayer()
         }
 
         if (episodes.isEmpty()) {
@@ -210,6 +211,17 @@ class PlayerController(
         currentEpisodes = emptyList()
         currentEpisodeIndex = null
         handledEndedEpisodeIndex = null
+        _state.value = PlayerState()
+    }
+
+    private fun createExoPlayer(): ExoPlayer {
+        return ExoPlayer.Builder(applicationContext).build()
+    }
+
+    private fun reinitializePlayer() {
+        exoPlayer = createExoPlayer()
+        exoPlayer.addListener(listener)
+        released = false
         _state.value = PlayerState()
     }
 

@@ -1,5 +1,6 @@
 package io.github.shashigm.videra.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -41,6 +43,7 @@ import io.github.shashigm.videra.domain.usecase.HomeFeedSection
 fun HomeScreen(
     viewModel: HomeViewModel,
     onItemClick: (InstalledAddon, MediaItem) -> Unit,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -49,6 +52,7 @@ fun HomeScreen(
         state = uiState,
         onRefresh = viewModel::refresh,
         onItemClick = onItemClick,
+        onSearchClick = onSearchClick,
         modifier = modifier
     )
 }
@@ -58,6 +62,7 @@ private fun HomeContent(
     state: HomeUiState,
     onRefresh: () -> Unit,
     onItemClick: (InstalledAddon, MediaItem) -> Unit,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     when (state) {
@@ -90,7 +95,8 @@ private fun HomeContent(
                 feed = state.feed,
                 modifier = modifier,
                 onRefresh = onRefresh,
-                onItemClick = onItemClick
+                onItemClick = onItemClick,
+                onSearchClick = onSearchClick
             )
         }
     }
@@ -101,11 +107,13 @@ private fun HomeFeedList(
     feed: HomeFeed,
     onRefresh: () -> Unit,
     onItemClick: (InstalledAddon, MediaItem) -> Unit,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding(),
         contentPadding = PaddingValues(
             start = 16.dp,
@@ -118,13 +126,20 @@ private fun HomeFeedList(
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Micro-Drama",
+                    modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.headlineMedium
                 )
+
+                IconButton(onClick = onSearchClick) {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = "Search micro-dramas"
+                    )
+                }
 
                 IconButton(onClick = onRefresh) {
                     Icon(
