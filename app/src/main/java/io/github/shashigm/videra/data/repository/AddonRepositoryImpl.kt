@@ -104,12 +104,7 @@ class AddonRepositoryImpl(
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: SerializationException) {
-            Resource.Error(
-                IllegalArgumentException(
-                    "Add-on manifest JSON does not match the Videra manifest schema.",
-                    exception
-                )
-            )
+            Resource.Error(exception)
         } catch (exception: Exception) {
             Resource.Error(exception)
         }
