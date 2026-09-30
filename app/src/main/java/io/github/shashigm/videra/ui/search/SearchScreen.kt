@@ -46,6 +46,7 @@ fun SearchScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
 
     Column(
         modifier = modifier
@@ -74,11 +75,7 @@ fun SearchScreen(
         }
 
         TextField(
-            value = when (uiState) {
-                SearchUiState.Loading -> ""
-                is SearchUiState.Success -> uiState.query
-                is SearchUiState.Error -> ""
-            },
+            value = query,
             onValueChange = viewModel::onQueryChange,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Search media") },
@@ -114,7 +111,7 @@ fun SearchScreen(
                     state = state,
                     onItemClick = onItemClick,
                     onSaveItem = onSaveItem,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
