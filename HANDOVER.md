@@ -1,100 +1,103 @@
 # HANDOVER.md
 
 ## Current Branch
-feature/addon-manager
+feature/micro-drama-episodes
 
 ## Completed Task
-Phase 10 — Add-on Manager, persistent add-on state, and reactive enabled-only feeds.
+Phase 11 — Micro-drama episodes, episode queueing, Shorts episode controls, and watch progress.
 
 Implemented:
-- Added `manifestUrl`, `customName`, `enabled`, and `cachedMetadataJson` to `InstalledAddonEntity`.
-- Expanded `VideraDatabase` from version 3 to version 4.
-- Added explicit Room migration 3 -> 4; existing add-ons keep their prior base URL as their manifest URL and remain enabled by default.
-- Added DAO support for finding add-ons, observing all installed add-ons, observing only enabled add-ons, toggling enabled state, and changing custom names.
-- Extended `InstalledAddon` with manifest name, manifest URL, custom name, enabled state, and cached metadata.
-- Added `InstallAddonUseCase` for HTTP/HTTPS manifest URL validation and the repository install boundary.
-- Kept Retrofit + Kotlinx Serialization as the remote manifest fetch/parse stack; no extra networking dependency was added.
-- Manifest validation requires non-blank id, name, version, and at least one supported media type.
-- Optional `mediaItemsUrl` is resolved against the manifest URL and must resolve to HTTP or HTTPS.
-- Successfully fetched manifests are cached locally as normalized JSON metadata.
-- Reinstalling an existing add-on preserves its enabled state and custom name while refreshing its manifest metadata.
-- Added `AddonManagerViewModel` with explicit validation, network, HTTP, parsing, and unknown error categories.
-- Added manual `AddonManagerViewModelFactory`.
-- Added dedicated `AddonManagerScreen` with add-manifest dialog, active/inactive state, enable/disable, rename, delete, and metadata-cache status.
-- Settings now opens Add-on Manager through a nested navigation route.
-- Add-on Manager ViewModel is scoped to the Add-on Manager navigation destination.
-- Home, Search, and Shorts now observe the database-backed enabled-only add-on Flow.
-- Room changes from install/remove/toggle propagate through StateFlow and cancel/restart in-flight feed collection via `collectLatest`.
-- The existing single global Media3 player remains unchanged and is reused by Home, Shorts, Search, and Library.
-- Library snapshots remain independent of installed add-on removal.
-- No scrapers, provider-specific extraction logic, XML, Hilt/Dagger, Gson, Moshi, or additional dependencies were added.
+- Extended `MediaItem` and `MediaItemDto` with `episodes`.
+- Added `Episode` / `EpisodeDto` with `number`, `title`, `streams`, and optional `durationSeconds`.
+- Existing stream payloads continue to map through the same Retrofit + Kotlinx Serialization remote boundary.
+- `MICRO_DRAMA` items with no explicit episodes receive five synthetic development episodes using the approved Big Buck Bunny test stream.
+- Synthetic development episodes use numbered titles (`Episode 1` through `Episode 5`) and a 60-second development duration.
+- Added `EpisodeProgressEntity`, `EpisodeProgressDao`, `EpisodeProgressRepository`, and its implementation.
+- Expanded Room from version 4 to version 5 with an explicit `4 -> 5` migration creating `episode_progress`.
+- Progress is keyed by `addonId::mediaId` and stores last watched episode number, playback position, and update time.
+- Extended the single global `PlayerController` with an internal episode queue.
+- `PlayerState` now exposes `currentEpisodeIndex`, `totalEpisodeCount`, and `currentPositionMs`.
+- `PlayerController` detects `Player.STATE_ENDED`, emits an episode-completed event, and automatically starts the next episode when one exists.
+- Previous/next episode playback remains inside the same global `ExoPlayer`; no second player or playlist engine was introduced.
+- `PlayerViewModel` automatically uses episode-aware playback when a media item contains episodes and exposes episode control methods.
+- `ShortsViewModel` now receives the existing global `PlayerController` plus `EpisodeProgressRepository` through the manual factory path.
+- `ShortsViewModel` restores the saved episode and saved position, persists progress on episode completion and pause, and saves progress before manual episode switches.
+- Replacing the current Shorts item cancels the previous selection job before loading the new item's saved progress.
+- `ShortsFeed` now retains the source add-on alongside each Shorts media item so the overlay can display the add-on name and progress can be scoped correctly.
+- Reworked `ShortsScreen` to full-bleed video with an overlaid title/add-on block, previous/next controls, and an `EP. X / N` episode pill.
+- The episode pill opens a `ModalBottomSheet` grid of all available episodes.
+- Selecting an episode immediately starts it through the same global player and closes the sheet.
+- Home, Search, Library, Settings, Add-on Manager, and the global Player remain intact.
+- No scrapers, provider-specific extraction logic, XML, Hilt/Dagger, Gson, Moshi, or new networking libraries were added.
 
 ## Room Database
 Current schema:
-- Version: 4
+- Version: 5
 - Entities:
   - `InstalledAddonEntity`
   - `LibraryEntity`
+  - `EpisodeProgressEntity`
 - Migrations:
   - 1 -> 2: adds `installed_addons.mediaItemsUrl`
   - 2 -> 3: creates `library_items`
   - 3 -> 4: adds manifest URL, custom name, enabled state, and cached manifest metadata
-- Migration 3 -> 4 defaults existing add-ons to enabled and copies the previous `baseUrl` into the new `manifestUrl` column.
-- Database creation still uses the application context and registers all migrations explicitly.
+  - 4 -> 5: creates `episode_progress`
+- Migration 4 -> 5 is explicit and registered together with all previous migrations.
+- Episode progress uses a stable composite key in one table instead of changing library snapshot semantics.
 
-## Add-on Fetch / Validation
-- Add-ons remain remote JSON sources; Videra contains no provider scraper.
-- Retrofit accepts an absolute manifest URL through the existing `@Url` API.
-- Kotlinx Serialization continues to ignore unknown JSON keys while requiring the declared manifest schema fields.
-- `InstallAddonUseCase` rejects non-HTTP/HTTPS URLs before network access.
-- Repository validation rejects blank required fields and invalid resolved media endpoints.
-- Serialization errors remain `SerializationException` so the UI can expose a parsing-specific error state.
-- Network/HTTP/database failures are converted into explicit manager UI errors without swallowing `CancellationException`.
+## Episode / Playback Semantics
+- Explicit episode arrays are sorted by episode number before entering the domain model.
+- A `MICRO_DRAMA` without explicit episodes gets five synthetic development episodes.
+- Synthetic episode streams use:
+  `https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4`
+- Episode-aware playback uses one Media3 `ExoPlayer` and swaps the current media item on each episode transition.
+- Auto-advance occurs only when the active media has an episode queue.
+- The player emits `EpisodeCompleted` before moving to the next episode so the Shorts ViewModel can persist the completed position.
+- Saved progress restores both episode number and `positionMs` when the Shorts item is selected.
+- `PlayerState.currentEpisodeIndex` is zero-based for internal state; the Shorts UI displays one-based episode numbers.
+- `currentPositionMs` is updated whenever player state synchronization occurs and is persisted on pause/final completion.
 
-## Reactive Feed Semantics
-- `AddonRepository.observeEnabledAddons()` is the single database-backed source for active add-ons.
-- Home and Search use enabled add-ons only.
-- Shorts also uses enabled add-ons only so disabled providers do not continue feeding vertical content.
-- Search still filters the loaded enabled catalog locally by title rather than sending a request for every keystroke.
-- Installing an add-on creates an enabled row, which immediately changes the enabled Flow and starts feed loading.
-- Disabling an add-on removes it from the enabled Flow immediately and cancels the previous feed collection.
-- Re-enabling an add-on immediately starts loading it again.
-- Removing an add-on updates both installed and enabled Room Flows.
+## Reactive Add-on Boundary
+- `AddonRepository.observeEnabledAddons()` remains the sole active-add-on source for Home, Search, and Shorts.
+- Add-on install/toggle/remove behavior from Phase 10 remains intact.
+- Episode support stays entirely after the remote JSON mapping boundary; Videra performs no provider scraping.
 
 ## Compose / ViewModel Verification
-- Search, Library, Settings, and Add-on Manager screens use lifecycle-aware StateFlow collection.
-- Add-on Manager operations run only in `viewModelScope`.
-- `CancellationException` is always rethrown.
-- All ViewModels continue to use manual factories; no service locator or Hilt/Dagger was introduced.
-- Scoped `Modifier.weight(1f)` is used without importing the internal `weight` symbol.
-- Add-on Manager list/empty content is constrained with scoped weight so it does not overflow the header area.
-- Destructive add-on removal requires confirmation.
+- `ShortsScreen` uses lifecycle-aware `StateFlow` collection.
+- `ShortsViewModel` uses `viewModelScope` for feed loading, progress collection, and episode selection.
+- Selection jobs are cancelled before starting a new media/episode selection.
+- `CancellationException` is rethrown by persistence operations.
+- `AddonManagerViewModel`, `ShortsViewModel`, and `PlayerViewModel` continue to use manual `ViewModelProvider.Factory` implementations.
+- Scoped `Modifier.weight(1f)` is used without importing the internal Compose `weight` symbol.
+- `ModalBottomSheet`, `LazyVerticalGrid`, `Surface(onClick = ...)`, and `safeDrawingPadding()` are used within their parent Compose scopes.
+- The full-bleed player remains behind the overlay instead of creating a player per pager page.
 
 ## CI Workflow
 - `.github/workflows/pr-debug-build.yml` remains unchanged.
 - Exact build command:
   `./gradlew assembleDebug -x lint -x test`
-- CI intentionally excludes lint and tests from this PR build workflow.
-- The repository cannot be built from the model container because outbound GitHub DNS/network access is unavailable; GitHub Actions is the authoritative build validation.
+- CI intentionally excludes lint and tests from the PR debug workflow.
+- Local container Gradle validation is unavailable because outbound GitHub DNS/network access is unavailable; GitHub Actions is the authoritative build validation.
 
-## Phase 9 / Main Baseline
-- Phase 9 / PR #8 is merged into `main`.
-- Current Phase 9 main baseline:
-  `07d4d5275e27717454703071ce14053f02c1311a`
-- Global Media3 player remains app-scoped with one `ExoPlayer`.
-- Big Buck Bunny development fallback remains:
-  `https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4`
+## Phase 10 / Main Baseline
+- Phase 10 / PR #9 is merged into `main`.
+- Current main baseline:
+  `3e20d3bf02e0bc7431d7c4caca84a6b0afefe310`
+- Room database baseline is version 4.
+- Add-on Manager remains available under Settings.
+- Single global Media3 player remains app-scoped with one `ExoPlayer`.
 - `android:usesCleartextTraffic="true"` remains enabled for development.
 
 ## Documentation Note
-A recursive GitHub tree check of current `main` found `HANDOVER.md` but no `BLUEPRINT.md` anywhere in the repository. Phase 10 was therefore implemented against the latest available handover and live source tree without inventing missing Blueprint requirements.
+A recursive GitHub tree check of the repository previously found no `BLUEPRINT.md` in the live tree. Phase 11 was implemented against the latest available `HANDOVER.md` and the live source architecture without inventing missing Blueprint requirements.
 
 ## Pull Request
-PR #9:
-- `feature/addon-manager` -> `main`
-- One feature branch and one PR for Phase 10.
+PR #10:
+- `feature/micro-drama-episodes` -> `main`
+- One feature branch and one PR for Phase 11.
 - No supporting branch was created.
-- PR is open; final merge should occur only after the newest PR Debug APK run succeeds.
+- PR is open.
+- Final merge should occur only after the newest PR Debug APK run on the final branch head succeeds.
 
 ## Git Workflow Rule
 - `main` is the permanent integration branch.
@@ -103,5 +106,5 @@ PR #9:
 - No mixing independent features into one PR.
 
 ## Next Immediate Step
-Verify the newest GitHub Actions run for the final branch head, then review and merge PR #9. After merge, continue with the next Blueprint-defined phase while preserving the remote JSON add-on boundary, Room persistence, single-player architecture, and lifecycle-safe StateFlow patterns.
+Verify the final GitHub Actions run for the current branch head, then review and merge PR #10. After merge, continue with the next Blueprint-defined phase while preserving the remote JSON add-on boundary, Room persistence, single-player architecture, and lifecycle-safe StateFlow patterns.
 
