@@ -24,9 +24,8 @@ class VideraAppContainer(
     private val api: VideraAddonApi =
         VideraAddonApi.create()
 
-    val preferencesRepository: PreferencesRepository by lazy {
+    val preferencesRepository: PreferencesRepository =
         PreferencesRepository(applicationContext)
-    }
 
     val addonRepository: AddonRepository by lazy {
         AddonRepositoryImpl(
