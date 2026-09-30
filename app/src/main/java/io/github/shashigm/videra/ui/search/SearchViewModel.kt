@@ -40,7 +40,8 @@ class SearchViewModel(
     private val searchMedia: SearchMediaUseCase = SearchMediaUseCase(repository)
 ) : ViewModel() {
 
-    private val query = MutableStateFlow("")
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
     private val refreshKey = MutableStateFlow(0)
     private val catalog = MutableStateFlow<Resource<SearchCatalog>>(
         Resource.Loading
@@ -56,7 +57,7 @@ class SearchViewModel(
             )
 
     val uiState: StateFlow<SearchUiState> =
-        combine(query, catalog) { rawQuery, catalogResource ->
+        combine(_query, catalog) { rawQuery, catalogResource ->
             val normalizedQuery = rawQuery.trim()
 
             when (catalogResource) {
@@ -112,7 +113,7 @@ class SearchViewModel(
     }
 
     fun onQueryChange(value: String) {
-        query.value = value
+        _query.value = value
     }
 
     fun refresh() {
