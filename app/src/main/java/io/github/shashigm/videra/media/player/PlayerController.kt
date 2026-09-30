@@ -26,7 +26,11 @@ data class PlayerState(
     val playbackState: PlayerPlaybackState = PlayerPlaybackState.IDLE,
     val currentMedia: MediaItem? = null,
     val currentStream: Stream? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val attemptedStreamUrl: String? = null,
+    val errorCodeName: String? = null,
+    val errorCauseMessage: String? = null,
+    val errorStackTrace: String? = null
 )
 
 class PlayerController(
@@ -52,14 +56,7 @@ class PlayerController(
         }
 
         override fun onPlayerError(error: PlaybackException) {
-            _state.value = PlayerState(
-                playbackState = PlayerPlaybackState.ERROR,
-                currentMedia = currentMedia,
-                currentStream = currentStream,
-                errorMessage = error.message
-                    ?.takeIf { it.isNotBlank() }
-                    ?: "Video playback failed."
-            )
+            updatePlaybackError(error)
         }
     }
 
@@ -89,7 +86,10 @@ class PlayerController(
                 playbackState = PlayerPlaybackState.ERROR,
                 currentMedia = media,
                 currentStream = stream,
-                errorMessage = "Stream URL must use HTTP or HTTPS."
+                errorMessage = "Stream URL must use HTTP or HTTPS.",
+                attemptedStreamUrl = normalizedUrl,
+                errorCauseMessage = "Stream URL must use HTTP or HTTPS.",
+                errorStackTrace = "Local stream validation failed before Media3 playback."
             )
             return
         }
@@ -172,6 +172,24 @@ class PlayerController(
         _state.value = PlayerState()
     }
 
+    private fun updatePlaybackError(error: PlaybackException) {
+        val media = currentMedia
+        val stream = currentStream
+
+        _state.value = PlayerState(
+            playbackState = PlayerPlaybackState.ERROR,
+            currentMedia = media,
+            currentStream = stream,
+            errorMessage = error.message
+                ?.takeIf { it.isNotBlank() }
+                ?: "Video playback failed.",
+            attemptedStreamUrl = stream?.url?.trim(),
+            errorCodeName = error.errorCodeName,
+            errorCauseMessage = error.cause?.message ?: error.message,
+            errorStackTrace = error.stackTraceToString()
+        )
+    }
+
     private fun syncState() {
         if (released) {
             return
@@ -186,14 +204,7 @@ class PlayerController(
         val error = exoPlayer.playerError
 
         if (error != null) {
-            _state.value = PlayerState(
-                playbackState = PlayerPlaybackState.ERROR,
-                currentMedia = media,
-                currentStream = stream,
-                errorMessage = error.message
-                    ?.takeIf { it.isNotBlank() }
-                    ?: "Video playback failed."
-            )
+            updatePlaybackError(error)
             return
         }
 
