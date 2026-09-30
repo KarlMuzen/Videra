@@ -59,7 +59,7 @@ fun FloatingNavigationBar(
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 12.dp, bottom = 8.dp),
+                .padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
             shape = RoundedCornerShape(32.dp),
             color = MaterialTheme.colorScheme.surface.copy(
                 alpha = if (feedSelected) 0.92f else 0.96f
