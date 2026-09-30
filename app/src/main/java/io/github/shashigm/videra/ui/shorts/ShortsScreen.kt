@@ -187,7 +187,7 @@ private fun ShortItemPage(
                 .fillMaxWidth()
                 .padding(16.dp),
             color = MaterialTheme.colorScheme.inverseSurface,
-            contentColor = MaterialTheme.colorScheme.onInverseSurface
+            contentColor = MaterialTheme.colorScheme.inverseOnSurface
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
