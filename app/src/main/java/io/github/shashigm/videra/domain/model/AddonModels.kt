@@ -20,7 +20,8 @@ data class MediaItem(
     val title: String,
     val posterUrl: String?,
     val bannerUrl: String?,
-    val type: MediaType
+    val type: MediaType,
+    val streams: List<Stream> = emptyList()
 )
 
 data class Stream(
