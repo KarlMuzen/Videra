@@ -8,7 +8,6 @@ import androidx.media3.common.Player
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 
-@OptIn(UnstableApi::class)
 @Composable
 fun PlayerSurface(
     player: Player,
