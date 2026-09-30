@@ -20,13 +20,22 @@ data class AddonManifestDto(
 )
 
 @Serializable
+data class EpisodeDto(
+    val number: Int,
+    val title: String,
+    val streams: List<StreamDto> = emptyList(),
+    val durationSeconds: Long? = null
+)
+
+@Serializable
 data class MediaItemDto(
     val id: String,
     val title: String,
     val posterUrl: String? = null,
     val bannerUrl: String? = null,
     val type: MediaTypeDto,
-    val streams: List<StreamDto> = emptyList()
+    val streams: List<StreamDto> = emptyList(),
+    val episodes: List<EpisodeDto> = emptyList()
 )
 
 @Serializable

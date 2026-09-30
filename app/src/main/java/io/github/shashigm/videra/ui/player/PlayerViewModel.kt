@@ -21,6 +21,11 @@ class PlayerViewModel(
         media: MediaItem,
         selectedStream: Stream? = null
     ) {
+        if (selectedStream == null && media.episodes.isNotEmpty()) {
+            playerController.playEpisodes(media)
+            return
+        }
+
         val stream = selectedStream
             ?: media.streams.firstOrNull()
             ?: BIG_BUCK_BUNNY_STREAM
@@ -54,6 +59,24 @@ class PlayerViewModel(
 
     fun dismiss() {
         playerController.dismiss()
+    }
+
+    fun selectEpisode(index: Int) {
+        val media = uiState.value.currentMedia ?: return
+        if (media.episodes.isNotEmpty()) {
+            playerController.playEpisodes(
+                media = media,
+                startEpisodeIndex = index
+            )
+        }
+    }
+
+    fun previousEpisode() {
+        playerController.previousEpisode()
+    }
+
+    fun nextEpisode() {
+        playerController.nextEpisode()
     }
 
     private companion object {

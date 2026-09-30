@@ -30,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import io.github.shashigm.videra.domain.model.LibraryItem
 import io.github.shashigm.videra.domain.model.SearchResult
 import io.github.shashigm.videra.domain.repository.AddonRepository
+import io.github.shashigm.videra.domain.repository.EpisodeProgressRepository
 import io.github.shashigm.videra.domain.repository.LibraryRepository
 import io.github.shashigm.videra.media.player.PlayerController
 import io.github.shashigm.videra.ui.home.HomeScreen
@@ -56,6 +57,7 @@ import io.github.shashigm.videra.ui.shorts.ShortsViewModelFactory
 @Composable
 fun MainScaffold(
     addonRepository: AddonRepository,
+    episodeProgressRepository: EpisodeProgressRepository,
     libraryRepository: LibraryRepository,
     playerController: PlayerController,
     modifier: Modifier = Modifier
@@ -92,7 +94,11 @@ fun MainScaffold(
         factory = HomeViewModelFactory(addonRepository)
     )
     val shortsViewModel: ShortsViewModel = viewModel(
-        factory = ShortsViewModelFactory(addonRepository)
+        factory = ShortsViewModelFactory(
+            repository = addonRepository,
+            playerController = playerController,
+            episodeProgressRepository = episodeProgressRepository
+        )
     )
     val searchViewModel: SearchViewModel = viewModel(
         factory = SearchViewModelFactory(addonRepository)
