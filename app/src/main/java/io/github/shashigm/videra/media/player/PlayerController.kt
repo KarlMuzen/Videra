@@ -109,7 +109,8 @@ class PlayerController(
     fun playEpisodes(
         media: MediaItem,
         startEpisodeIndex: Int = 0,
-        episodes: List<Episode> = media.episodes
+        episodes: List<Episode> = media.episodes,
+        startPositionMs: Long = 0L
     ) {
         if (released) {
             return
@@ -129,7 +130,7 @@ class PlayerController(
         currentEpisodeIndex = safeIndex
         handledEndedEpisodeIndex = null
         currentStream = episodeStream(media, episodes[safeIndex])
-        loadCurrentStream()
+        loadCurrentStream(startPositionMs = startPositionMs.coerceAtLeast(0L))
     }
 
     fun previousEpisode() {
@@ -189,9 +190,7 @@ class PlayerController(
             return
         }
 
-        val media = currentMedia
-        val stream = currentStream
-        if (media != null && stream != null) {
+        if (currentMedia != null && currentStream != null) {
             loadCurrentStream()
         }
     }
@@ -225,7 +224,7 @@ class PlayerController(
             currentMedia ?: return,
             currentEpisodes[safeIndex]
         )
-        loadCurrentStream()
+        loadCurrentStream(startPositionMs = 0L)
     }
 
     private fun episodeStream(
@@ -237,7 +236,7 @@ class PlayerController(
             ?: BIG_BUCK_BUNNY_STREAM
     }
 
-    private fun loadCurrentStream() {
+    private fun loadCurrentStream(startPositionMs: Long = 0L) {
         val media = currentMedia ?: return
         val stream = currentStream ?: return
         val normalizedUrl = stream.url.trim()
@@ -285,6 +284,7 @@ class PlayerController(
 
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
+        exoPlayer.seekTo(startPositionMs.coerceAtLeast(0L))
         exoPlayer.play()
     }
 
