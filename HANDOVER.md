@@ -94,7 +94,9 @@ A recursive GitHub tree check of current `main` found `HANDOVER.md` but no `BLUE
 PR #8:
 - `feature/search-library` -> `main`
 - Open, not merged.
-- Current source head before this handover-only commit:
+- Current branch head:
+  `707e4e9bb0aba7ae38d6dbab37d42441708517e4`
+- Last source-code validation head:
   `7bf9ccda2bf7c6a7f934fb926f12c12096bc43b8`
 - Current `main`:
   `d1e9040486445c38244ad969c98e4e0b203742f0`
