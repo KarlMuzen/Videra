@@ -103,7 +103,7 @@ fun AddonManagerScreen(
         if (installedAddons.isEmpty()) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -126,7 +126,7 @@ fun AddonManagerScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     top = 8.dp,
