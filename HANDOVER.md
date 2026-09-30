@@ -52,6 +52,11 @@ Updated `.github/workflows/pr-debug-build.yml`:
 - Lint and test tasks are explicitly excluded from the PR debug assembly.
 - APK upload behavior remains unchanged.
 
+## Build Fixes Found During Phase 8 Validation
+1. CI Run #16 failed before Gradle execution because `./gradlew` did not exist. Added executable `gradlew` with mode `100755`.
+2. CI Run #17 reached Kotlin compilation and found one compiler error in `MainScaffold.kt`: missing `androidx.compose.ui.unit.dp` import. Added the import.
+3. CI Run #18 completed successfully through `Assemble Debug` and Debug APK upload.
+
 ## Current Bugs / Product Boundaries
 - Real add-ons can provide playback streams through the optional `streams` field on each media item.
 - Existing add-ons that omit `streams` currently use the approved Big Buck Bunny development stream so the player path can be exercised without provider-specific extraction.
@@ -75,7 +80,7 @@ Verified against current Android/Media3 documentation:
 PR #7:
 - `feature/media3-player` -> `main`
 - Open, not merged.
-- Current PR head: `325c9750ecf2fb901eebb4f1e80bb16c9835c641`
+- Current PR head: `12d5cd4c844ff77ece029472cf552b7d959acd04`
 - Current `main`: `f3746992ab0aa6b1fd317d8fc27c2cb98aa7fa62`
 - Feature branch is 0 commits behind `main`.
 - Phase 7 PR #6 was merged before Phase 8 work.
@@ -88,7 +93,7 @@ PR #7:
 - No mixing independent features into one PR.
 
 ## CI Status
-Latest PR Debug APK verification:
+Latest completed application-code validation:
 - Workflow: PR Debug APK
 - Run: #18
 - Tested PR head: `325c9750ecf2fb901eebb4f1e80bb16c9835c641`
@@ -97,7 +102,7 @@ Latest PR Debug APK verification:
 - Upload Debug APK: success
 - Lint and tests were explicitly excluded by the workflow command as requested.
 
-Phase 8 is build-verified at the current validated head.
+Run #19 is a documentation-only synchronization build for the handover update and does not change application build inputs. Phase 8 application code is build-verified.
 
 ## Next Immediate Step
 Phase 9 — Continue according to the latest `BLUEPRINT.md`; preserve the one-player architecture and verify real add-on stream playback on a physical Android device before adding more playback features.
