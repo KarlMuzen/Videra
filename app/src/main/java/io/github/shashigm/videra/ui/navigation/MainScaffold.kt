@@ -31,6 +31,9 @@ import io.github.shashigm.videra.ui.home.HomeViewModelFactory
 import io.github.shashigm.videra.ui.settings.SettingsScreen
 import io.github.shashigm.videra.ui.settings.SettingsViewModel
 import io.github.shashigm.videra.ui.settings.SettingsViewModelFactory
+import io.github.shashigm.videra.ui.shorts.ShortsScreen
+import io.github.shashigm.videra.ui.shorts.ShortsViewModel
+import io.github.shashigm.videra.ui.shorts.ShortsViewModelFactory
 
 @Composable
 fun MainScaffold(
@@ -46,6 +49,9 @@ fun MainScaffold(
     )
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(addonRepository)
+    )
+    val shortsViewModel: ShortsViewModel = viewModel(
+        factory = ShortsViewModelFactory(addonRepository)
     )
 
     Scaffold(
@@ -100,10 +106,18 @@ fun MainScaffold(
             }
         }
     ) { innerPadding ->
+        val navContentModifier = if (
+            currentDestination?.route == Screen.Shorts.route
+        ) {
+            Modifier.fillMaxSize()
+        } else {
+            Modifier.padding(innerPadding)
+        }
+
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = navContentModifier
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
@@ -112,7 +126,9 @@ fun MainScaffold(
             }
 
             composable(Screen.Shorts.route) {
-                PlaceholderScreen(title = "Shorts")
+                ShortsScreen(
+                    viewModel = shortsViewModel
+                )
             }
 
             composable(Screen.Search.route) {
