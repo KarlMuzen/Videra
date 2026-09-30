@@ -4,7 +4,7 @@
 feature/premium-ui-onboarding
 
 ## Completed Task
-Phase 13 — Premium UI, theming, onboarding, and transparent floating navigation.
+Phase 13.1 — UI and architecture hardening after the Phase 13 merge.
 
 Implemented:
 - SharedPreferences-backed PreferencesRepository for onboarding completion and app theme.
@@ -17,10 +17,10 @@ Implemented:
 - Navigation names are now Discover and Feed instead of Home and Shorts.
 - MainScaffold uses a root Box rather than Scaffold bottomBar.
 - FloatingNavigationBar is positioned at BottomCenter with navigationBarsPadding.
-- Feed navigation is transparent with a subtle gradient scrim over the edge-to-edge video.
+- Feed navigation is transparent with a 100.dp bounded gradient scrim over the edge-to-edge video, avoiding unconstrained-height measurement on cold start.
 - Other top-level routes use a translucent themed navigation surface.
 - Player and onboarding routes do not render floating navigation.
-- Settings includes a persisted System/OLED/Velvet appearance selector.
+- Settings persists the two supported dark themes: Velvet Red and OLED Black.
 - Existing Micro-Drama-only content, episode progress, lifecycle handling, and single global Media3 player remain intact.
 - CI workflow path and exact Gradle command remain unchanged.
 
@@ -30,10 +30,13 @@ SharedPreferences file: videra_preferences
 Keys:
 - onboardingCompleted
 - appTheme
+- last_crash_log
 
 Defaults:
 - onboardingCompleted = false
-- appTheme = SYSTEM
+- appTheme = VELVET_RED
+
+Theme parsing is defensive: blank or unknown values fall back to VELVET_RED.
 
 ## CI Workflow
 .github/workflows/pr-debug-build.yml remains unchanged.
@@ -45,16 +48,15 @@ GitHub Actions is authoritative build validation because local Gradle execution 
 
 ## Main Baseline
 Current main:
-2d5b5fffa52d7cc2cb57379e72961ee1d30d0546
+91ed4defddbdbc6df5616bfff32b7df352c7442d
 
 ## Pull Request
-Phase 13:
-feature/premium-ui-onboarding -> main
+Phase 13 and Phase 13.1 were merged through PR #12 and PR #13 respectively.
 
-PR #12 is the single Phase 13 pull request.
-
-## Next Immediate Step
-Verify the final PR Debug APK workflow on the final branch head. Resolve any CI build errors before merging PR #12.
+## Error Handling
+- CrashHandler is isolated under diagnostics/ and is installed before ComponentActivity.onCreate.
+- It persists the previous uncaught-exception trace to last_crash_log using commit() so the next launch can surface it.
+- MainActivity only presents and clears the previous-session diagnostic; normal UI flows do not own uncaught-exception handling.
 
 
 ## Diagnostics / Insets Hardening
