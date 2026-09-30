@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -22,10 +23,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.shashigm.videra.media.player.PlayerPlaybackState
+import io.github.shashigm.videra.media.player.PlayerState
 
+@Suppress("DEPRECATION")
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel,
@@ -33,6 +39,7 @@ fun PlayerScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
     Box(
         modifier = modifier
@@ -94,6 +101,8 @@ fun PlayerScreen(
             }
 
             PlayerPlaybackState.ERROR -> {
+                val diagnostics = buildDiagnostics(state)
+
                 Surface(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -119,10 +128,54 @@ fun PlayerScreen(
                             style = MaterialTheme.typography.bodyMedium
                         )
 
-                        Button(
-                            onClick = viewModel::retry
+                        SelectionContainer {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Stream URL: \${
+                                        state.attemptedStreamUrl
+                                            ?: "Unavailable"
+                                    }",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+
+                                Text(
+                                    text = "Media3 error code: \${
+                                        state.errorCodeName
+                                            ?: "Unavailable"
+                                    }",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+
+                                Text(
+                                    text = "Exception message: \${
+                                        state.errorCauseMessage
+                                            ?: "Unavailable"
+                                    }",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Retry")
+                            Button(
+                                onClick = viewModel::retry
+                            ) {
+                                Text("Retry")
+                            }
+
+                            Button(
+                                onClick = {
+                                    clipboardManager.setText(
+                                        AnnotatedString(diagnostics)
+                                    )
+                                }
+                            ) {
+                                Text("Copy Diagnostics")
+                            }
                         }
                     }
                 }
@@ -132,3 +185,26 @@ fun PlayerScreen(
         }
     }
 }
+
+private fun buildDiagnostics(state: PlayerState): String =
+    buildString {
+        appendLine("Videra playback diagnostics")
+        appendLine("Media: \${state.currentMedia?.title ?: "Unavailable"}")
+        appendLine(
+            "Stream URL: \${state.attemptedStreamUrl ?: "Unavailable"}"
+        )
+        appendLine(
+            "Media3 error code: \${state.errorCodeName ?: "Unavailable"}"
+        )
+        appendLine(
+            "Exception message: \${
+                state.errorCauseMessage ?: "Unavailable"
+            }"
+        )
+        appendLine()
+        appendLine("Stack trace:")
+        appendLine(
+            state.errorStackTrace
+                ?: "No stack trace was captured."
+        )
+    }
