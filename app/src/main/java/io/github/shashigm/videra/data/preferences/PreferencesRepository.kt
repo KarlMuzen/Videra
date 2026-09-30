@@ -5,58 +5,59 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+enum class AppTheme {
+    VELVET_RED,
+    OLED_BLACK
+}
+
 class PreferencesRepository(
     context: Context
 ) {
     companion object {
-        const val THEME_SYSTEM = "SYSTEM"
-        const val THEME_OLED_BLACK = "OLED_BLACK"
-        const val THEME_VELVET_RED = "VELVET_RED"
-
         private const val PREFS_NAME = "videra_preferences"
         private const val KEY_ONBOARDING_COMPLETED = "onboardingCompleted"
-        private const val KEY_APP_THEME = "appTheme"
+        private const val KEY_APP_THEME = "app_theme"
+        private const val LEGACY_KEY_APP_THEME = "appTheme"
     }
 
-    private val preferences = context.applicationContext.getSharedPreferences(
+    private val sharedPreferences = context.applicationContext.getSharedPreferences(
         PREFS_NAME,
         Context.MODE_PRIVATE
     )
 
     private val _onboardingCompleted = MutableStateFlow(
-        preferences.getBoolean(KEY_ONBOARDING_COMPLETED, false)
+        sharedPreferences.getBoolean(KEY_ONBOARDING_COMPLETED, false)
     )
     val onboardingCompleted: StateFlow<Boolean> = _onboardingCompleted.asStateFlow()
 
     fun isOnboardingCompleted(): Boolean {
-        return preferences.getBoolean(KEY_ONBOARDING_COMPLETED, false)
+        return sharedPreferences.getBoolean(KEY_ONBOARDING_COMPLETED, false)
     }
 
-    private val _appTheme = MutableStateFlow(
-        normalizeTheme(preferences.getString(KEY_APP_THEME, THEME_SYSTEM))
-    )
-    val appTheme: StateFlow<String> = _appTheme.asStateFlow()
+    private val _appTheme = MutableStateFlow(getTheme())
+    val appTheme: StateFlow<AppTheme> = _appTheme.asStateFlow()
+
+    fun getTheme(): AppTheme {
+        val raw = sharedPreferences.getString(KEY_APP_THEME, null)
+            ?: sharedPreferences.getString(LEGACY_KEY_APP_THEME, null)
+            ?: return AppTheme.VELVET_RED
+
+        return AppTheme.entries.firstOrNull {
+            it.name.equals(raw.trim(), ignoreCase = true)
+        } ?: AppTheme.VELVET_RED
+    }
 
     fun setOnboardingCompleted(completed: Boolean) {
-        preferences.edit()
+        sharedPreferences.edit()
             .putBoolean(KEY_ONBOARDING_COMPLETED, completed)
             .apply()
         _onboardingCompleted.value = completed
     }
 
-    fun setAppTheme(theme: String) {
-        val normalized = normalizeTheme(theme)
-        preferences.edit()
-            .putString(KEY_APP_THEME, normalized)
+    fun setTheme(theme: AppTheme) {
+        sharedPreferences.edit()
+            .putString(KEY_APP_THEME, theme.name)
             .apply()
-        _appTheme.value = normalized
-    }
-
-    private fun normalizeTheme(theme: String?): String {
-        return when (theme?.trim()) {
-            THEME_OLED_BLACK -> THEME_OLED_BLACK
-            THEME_VELVET_RED -> THEME_VELVET_RED
-            else -> THEME_SYSTEM
-        }
+        _appTheme.value = theme
     }
 }
