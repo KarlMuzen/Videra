@@ -37,8 +37,7 @@ sealed interface ShortsUiState {
 
 class ShortsViewModel(
     private val repository: AddonRepository,
-    private val getShortsFeed: GetShortsFeedUseCase =
-        GetShortsFeedUseCase(repository)
+    private val getShortsFeed: GetShortsFeedUseCase = GetShortsFeedUseCase(repository)
 ) : ViewModel() {
 
     private val refreshKey = MutableStateFlow(0)
@@ -46,9 +45,9 @@ class ShortsViewModel(
     private val _uiState = MutableStateFlow<ShortsUiState>(ShortsUiState.Loading)
     val uiState: StateFlow<ShortsUiState> = _uiState.asStateFlow()
 
-    private val installedAddons: StateFlow<List<InstalledAddon>> =
+    private val enabledAddons: StateFlow<List<InstalledAddon>> =
         repository
-            .observeInstalledAddons()
+            .observeEnabledAddons()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -57,7 +56,7 @@ class ShortsViewModel(
 
     init {
         viewModelScope.launch {
-            combine(installedAddons, refreshKey) { addons, _ ->
+            combine(enabledAddons, refreshKey) { addons, _ ->
                 addons
             }.collectLatest { addons ->
                 _uiState.value = ShortsUiState.Loading
