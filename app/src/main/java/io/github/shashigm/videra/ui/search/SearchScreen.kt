@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -180,7 +179,7 @@ private fun SearchResultCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier.width(150.dp)
+        modifier = modifier.fillMaxWidth()
     ) {
         Column {
             val artwork = result.mediaItem.posterUrl
