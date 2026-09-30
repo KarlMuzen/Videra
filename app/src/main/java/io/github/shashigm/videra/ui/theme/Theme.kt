@@ -59,7 +59,7 @@ fun VideraTheme(
     content: @Composable () -> Unit
 ) {
     val darkSystem = isSystemInDarkTheme()
-    val scheme = when (appTheme) {
+    val scheme = when (appTheme.trim()) {
         "OLED_BLACK" -> OledBlackScheme
         "VELVET_RED" -> VelvetRedScheme
         else -> if (darkSystem) SystemDarkScheme else SystemLightScheme
