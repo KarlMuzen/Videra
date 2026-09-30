@@ -18,19 +18,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.github.shashigm.videra.domain.repository.AddonRepository
+import io.github.shashigm.videra.ui.settings.SettingsScreen
+import io.github.shashigm.videra.ui.settings.SettingsViewModel
+import io.github.shashigm.videra.ui.settings.SettingsViewModelFactory
 
 @Composable
 fun MainScaffold(
+    addonRepository: AddonRepository,
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModelFactory(addonRepository)
+    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -38,8 +48,6 @@ fun MainScaffold(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Reserved global slot for the Now Playing / Mini-Player bar.
-                // This lives outside NavHost so it survives top-level tab changes.
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -108,7 +116,9 @@ fun MainScaffold(
             }
 
             composable(Screen.Settings.route) {
-                PlaceholderScreen(title = "Settings")
+                SettingsScreen(
+                    viewModel = settingsViewModel
+                )
             }
         }
     }
