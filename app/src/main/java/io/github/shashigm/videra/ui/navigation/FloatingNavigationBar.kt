@@ -3,6 +3,8 @@ package io.github.shashigm.videra.ui.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -60,7 +62,7 @@ fun FloatingNavigationBar(
             },
             tonalElevation = if (feedSelected) 0.dp else 3.dp
         ) {
-            androidx.compose.foundation.layout.Row(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 6.dp),
