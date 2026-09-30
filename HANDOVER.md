@@ -74,7 +74,7 @@ The first candidate build exposed real Compose defects and was corrected before 
 6. `Assemble Debug` succeeded.
 7. The workflow command remained exactly:
    `./gradlew assembleDebug -x lint -x test`
-8. Lint and tests are explicitly excluded by the workflow, so this phase has not been separately lint/test validated by CI.
+11. Lint and tests are explicitly excluded by the workflow, so this phase has not been separately lint/test validated by CI.
 
 ## Phase 8 Baseline
 Phase 8 / PR #7 is merged into `main`.
@@ -95,7 +95,7 @@ PR #8:
 - `feature/search-library` -> `main`
 - Open, not merged.
 - Current branch head:
-  `707e4e9bb0aba7ae38d6dbab37d42441708517e4`
+  `4d5fb519cdcf790e866c81fa72cd9a81cdf6eee2`
 - Last source-code validation head:
   `7bf9ccda2bf7c6a7f934fb926f12c12096bc43b8`
 - Current `main`:
