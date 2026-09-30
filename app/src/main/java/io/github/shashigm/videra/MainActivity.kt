@@ -30,6 +30,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     MainScaffold(
                         addonRepository = appContainer.addonRepository,
+                        libraryRepository = appContainer.libraryRepository,
                         playerController = appContainer.playerController
                     )
                 }
