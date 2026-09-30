@@ -23,7 +23,8 @@ fun AddonManifestDto.toDomain(): AddonManifest {
         id = id,
         name = name,
         version = version,
-        supportedTypes = supportedTypes.map(MediaTypeDto::toDomain)
+        supportedTypes = supportedTypes.map(MediaTypeDto::toDomain),
+        mediaItemsUrl = mediaItemsUrl
     )
 }
 

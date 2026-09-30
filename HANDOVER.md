@@ -1,52 +1,65 @@
 # HANDOVER.md
 
 ## Current Branch
-feature/addon-manager-ui
+feature/home-aggregator
 
 ## Completed Task
-Phase 5 — Add-on Manager MVVM & Settings UI.
+Phase 6 — Home Aggregator Feed.
 
 Implemented:
-- Created `feature/addon-manager-ui` directly from merged Phase 4 `main`.
-- Added `SettingsViewModel` with:
-  - `StateFlow<List<InstalledAddon>>` for installed add-ons.
-  - `SettingsUiState` for installation progress, success, and error feedback.
-  - `SettingsEvent.InstallAddon(url)`.
-  - `SettingsEvent.RemoveAddon(id)`.
-  - HTTP/HTTPS URL validation before repository access.
-  - User-facing handling for DNS, timeout, HTTP, and invalid JSON failures.
-  - Coroutine cancellation rethrow.
-- Added manual `SettingsViewModelFactory` for repository injection.
-- Added native Material 3 `SettingsScreen`:
-  - Add-on URL TextField.
-  - Install Button.
-  - CircularProgressIndicator during installation.
-  - Inline success/error messages.
-  - Installed add-on LazyColumn.
-  - Name, status, version, and base URL display.
-  - Remove IconButton.
-  - Empty state.
-- Added `VideraAppContainer` for manual construction of:
-  - Room `VideraDatabase`.
-  - `VideraAddonApi`.
-  - `AddonRepositoryImpl`.
-- Wired the Settings destination in `MainScaffold` without changing the five top-level destinations or global mini-player slot.
-- Updated `MainActivity` to provide the repository through the app container.
-- Added `androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0` for Compose ViewModel factory access.
-- Preserved the Phase 4 Coil network artifact coordinate after diff audit.
-- No scraper, provider-specific extraction, playback, or real catalog integration was introduced.
+- Created `feature/home-aggregator` directly from merged Phase 5 `main`.
+- Extended the add-on manifest contract with optional `mediaItemsUrl`.
+- Extended domain `AddonManifest` and `InstalledAddon` models with optional `mediaItemsUrl`.
+- Extended `InstalledAddonEntity` with nullable `mediaItemsUrl`.
+- Added Room migration `1 -> 2` for the new nullable media endpoint column.
+- Updated `AddonRepositoryImpl` to:
+  - validate add-on URLs;
+  - resolve relative `mediaItemsUrl` values against the manifest URL;
+  - persist the resolved media endpoint;
+  - expose `getMediaItems(InstalledAddon)`;
+  - map media DTOs into domain models;
+  - preserve coroutine cancellation.
+- Added `GetHomeFeedUseCase` as the domain aggregation boundary.
+- Aggregation behavior:
+  - reads all installed add-ons;
+  - launches one `async` request per add-on;
+  - uses `supervisorScope` so one failed add-on does not cancel successful siblings;
+  - keeps successful non-empty sections;
+  - records per-add-on failures for partial-failure UI;
+  - returns a global error only when every installed add-on fails.
+- Added `HomeViewModel` with UI-safe `StateFlow<HomeUiState>`.
+- Home states:
+  - Loading
+  - Empty
+  - Success
+  - Error
+- Home automatically refreshes when installed add-ons change and also supports manual refresh.
+- Added manual `HomeViewModelFactory`.
+- Added native Material 3 `HomeScreen`:
+  - top-level Home header;
+  - refresh action;
+  - partial-failure warning;
+  - `LazyColumn` containing one `LazyRow` per installed add-on;
+  - media cards;
+  - Coil 3 `AsyncImage`;
+  - empty/error/loading states.
+- Updated `MainScaffold` only enough to inject and render `HomeViewModel` for the existing Home destination.
+- Preserved the existing five-tab navigation and global mini-player slot.
+- No playback/player implementation, scraper, provider-specific extraction, or real catalog integration was added.
+- No Room entities or Retrofit DTOs are exposed to Compose.
 
-## Current Bugs
-No known Phase 5 code defect has been observed from static diff review.
+## Current Bugs / Known Boundary
+No known Phase 6 static code defect remains after diff review.
 
-CI boundary:
-- PR #4 was opened against `main`.
-- GitHub Actions run #7 for the initial PR head was observed in progress.
-- This handover update changes the PR head, so the latest run must be checked after this commit. Do not treat an older run as final build verification.
+Important compatibility boundary:
+- The Phase 3 manifest contract did not originally define a catalog endpoint.
+- Phase 6 therefore adds optional `mediaItemsUrl` to the manifest contract and persists it through Room migration 1 -> 2.
+- Existing installed add-ons created before this migration will have a null `mediaItemsUrl`. They need to be reinstalled from a manifest that supplies `mediaItemsUrl` before Home can fetch their media catalog.
+- Home does not invent provider-specific endpoint paths.
 
 ## Pull Request
-PR #4:
-- `feature/addon-manager-ui` → `main`
+PR #5:
+- `feature/home-aggregator` -> `main`
 - Open, not merged.
 
 ## Git Workflow Rule
@@ -56,8 +69,12 @@ PR #4:
 - No unrelated feature branches.
 - No mixing independent features into one PR.
 
+## CI Status
+The PR workflow is triggered by the repository's existing PR Debug APK workflow.
+The latest run must be checked after the final PR head is created before treating Phase 6 as build-verified.
+
 ## Next Immediate Step
-Phase 6 — The Home Aggregator Feed.
+Phase 7 — The Shorts / Vertical Feed.
 
 Use this exact prompt:
 
@@ -65,13 +82,13 @@ Use this exact prompt:
 
 Continue Project Videra following `BLUEPRINT.md` and the latest `HANDOVER.md`. I am developing from my mobile phone, so output complete, copy-ready files only.
 
-Phase 5 has been implemented on `feature/addon-manager-ui`. Before starting Phase 6, assume PR #4 has been reviewed and merged into `main`.
+Phase 6 has been implemented on `feature/home-aggregator`. Before starting Phase 7, assume PR #5 has been reviewed and merged into `main`.
 
 Git workflow:
-- Create and switch to `feature/home-aggregator` from `main`.
+- Create and switch to `feature/shorts-feed` from `main`.
 - Maintain the strict rule: 1 feature = 1 branch = 1 PR.
 - At most one extra supporting branch beyond `main`, only if genuinely required.
-- Do not mix playback/player implementation or unrelated settings work into this branch.
+- Do not mix player implementation or unrelated settings/home work into this branch.
 
 Architecture constraints:
 - Dumb Frontend, Smart API.
@@ -90,8 +107,8 @@ Architecture constraints:
 - No real copyrighted catalog titles or pirate URLs.
 - Use clearly synthetic dummy data or Big Buck Bunny only.
 
-Existing Phase 3/4/5 components:
-- AddonManifestDto
+Existing components:
+- AddonManifestDto with optional `mediaItemsUrl`
 - MediaTypeDto
 - MediaItemDto
 - StreamDto
@@ -100,25 +117,30 @@ Existing Phase 3/4/5 components:
 - Domain models and mapper extensions
 - InstalledAddonEntity
 - AddonDao
-- VideraDatabase
+- VideraDatabase version 2
 - Resource<T>
 - AddonRepository / AddonRepositoryImpl
 - SettingsViewModel
 - SettingsViewModelFactory
 - SettingsScreen
 - VideraAppContainer
+- GetHomeFeedUseCase
+- HomeViewModel
+- HomeViewModelFactory
+- HomeScreen
 
-Phase 6 goals:
-1. Build the Home Aggregator Feed on top of installed user add-ons.
-2. Keep all provider/network logic behind AddonRepository or a new domain-level aggregation contract.
-3. Expose a UI-safe StateFlow for Home feed loading, success, empty, and error states.
-4. Aggregate results across multiple installed add-ons without leaking Retrofit DTOs or Room entities into Compose.
-5. Handle one failed add-on without taking down the whole feed where practical.
-6. Create the Home Compose screen using native Material 3 components and Coil 3 for images.
-7. Use only safe synthetic/dummy content until a real user-provided add-on supplies content.
-8. Preserve the existing bottom navigation and global mini-player slot.
-9. Keep Settings/Add-on Manager behavior unchanged except for shared repository wiring required by the aggregator.
-10. Add focused unit-testable aggregation boundaries where practical.
-11. Inspect the merged Phase 5 implementation on `main` before coding and preserve existing public contracts unless a concrete defect requires correction.
+Phase 7 goals:
+1. Build the Shorts / vertical feed on top of installed user add-ons.
+2. Reuse the existing repository/domain boundaries instead of adding provider-specific networking to Compose.
+3. Expose a UI-safe StateFlow for vertical-feed loading, content, empty, and error states.
+4. Fetch content across eligible installed add-ons in parallel where appropriate.
+5. Handle partial add-on failures without crashing or blanking the entire feed when successful content exists.
+6. Create a Compose vertical paging/feed experience using native Material 3 components and Coil 3.
+7. Keep the global mini-player slot and top-level navigation unchanged.
+8. Do not modify Settings behavior except for unavoidable shared repository/domain changes.
+9. Avoid introducing a new paging/networking framework unless a concrete requirement justifies it.
+10. Use only safe synthetic/dummy content until a real user-provided add-on supplies content.
+11. Add focused unit-testable boundaries where practical.
+12. Inspect the merged Phase 6 implementation on `main` before coding and preserve existing public contracts unless a concrete compile or architectural defect requires correction.
 
 At the end, provide the updated `HANDOVER.md` block for the next session."

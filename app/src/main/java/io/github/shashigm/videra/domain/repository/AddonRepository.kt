@@ -3,6 +3,7 @@ package io.github.shashigm.videra.domain.repository
 import io.github.shashigm.videra.domain.common.Resource
 import io.github.shashigm.videra.domain.model.AddonManifest
 import io.github.shashigm.videra.domain.model.InstalledAddon
+import io.github.shashigm.videra.domain.model.MediaItem
 import kotlinx.coroutines.flow.Flow
 
 interface AddonRepository {
@@ -13,6 +14,10 @@ interface AddonRepository {
         baseUrl: String,
         manifestUrl: String = baseUrl
     ): Resource<AddonManifest>
+
+    suspend fun getMediaItems(
+        addon: InstalledAddon
+    ): Resource<List<MediaItem>>
 
     suspend fun removeAddon(addonId: String)
 }

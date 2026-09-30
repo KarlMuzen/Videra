@@ -11,7 +11,8 @@ data class AddonManifest(
     val id: String,
     val name: String,
     val version: String,
-    val supportedTypes: List<MediaType>
+    val supportedTypes: List<MediaType>,
+    val mediaItemsUrl: String? = null
 )
 
 data class MediaItem(
@@ -32,5 +33,6 @@ data class InstalledAddon(
     val id: String,
     val name: String,
     val baseUrl: String,
-    val version: String
+    val version: String,
+    val mediaItemsUrl: String? = null
 )

@@ -8,10 +8,13 @@ import io.github.shashigm.videra.data.remote.mapper.toDomain
 import io.github.shashigm.videra.domain.common.Resource
 import io.github.shashigm.videra.domain.model.AddonManifest
 import io.github.shashigm.videra.domain.model.InstalledAddon
+import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.repository.AddonRepository
+import java.net.URI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class AddonRepositoryImpl(
     private val api: VideraAddonApi,
@@ -35,32 +38,73 @@ class AddonRepositoryImpl(
         val normalizedBaseUrl = baseUrl.trim().trimEnd('/')
         val normalizedManifestUrl = manifestUrl.trim()
 
-        if (normalizedBaseUrl.isBlank()) {
+        if (!isValidHttpUrl(normalizedBaseUrl)) {
             return Resource.Error(
-                IllegalArgumentException("Add-on base URL cannot be blank.")
+                IllegalArgumentException(
+                    "Add-on base URL must be a valid HTTP or HTTPS URL."
+                )
             )
         }
 
-        if (normalizedManifestUrl.isBlank()) {
+        if (!isValidHttpUrl(normalizedManifestUrl)) {
             return Resource.Error(
-                IllegalArgumentException("Add-on manifest URL cannot be blank.")
+                IllegalArgumentException(
+                    "Add-on manifest URL must be a valid HTTP or HTTPS URL."
+                )
             )
         }
 
         return try {
             val manifestDto = api.getManifest(normalizedManifestUrl)
+            val resolvedMediaItemsUrl = manifestDto.mediaItemsUrl
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { endpoint ->
+                    resolveUrl(normalizedManifestUrl, endpoint)
+                }
 
             addonDao.insert(
                 InstalledAddonEntity(
                     id = manifestDto.id,
                     name = manifestDto.name,
                     baseUrl = normalizedBaseUrl,
-                    version = manifestDto.version
+                    version = manifestDto.version,
+                    mediaItemsUrl = resolvedMediaItemsUrl
                 )
             )
 
             Resource.Success(
-                manifestDto.toDomain()
+                manifestDto.toDomain().copy(
+                    mediaItemsUrl = resolvedMediaItemsUrl
+                )
+            )
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            Resource.Error(exception)
+        }
+    }
+
+    override suspend fun getMediaItems(
+        addon: InstalledAddon
+    ): Resource<List<MediaItem>> {
+        val endpoint = addon.mediaItemsUrl
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+
+        if (endpoint == null || !isValidHttpUrl(endpoint)) {
+            return Resource.Error(
+                IllegalStateException(
+                    "Add-on ${addon.name} does not provide a valid mediaItemsUrl."
+                )
+            )
+        }
+
+        return try {
+            Resource.Success(
+                api.getMediaItems(endpoint).map { item ->
+                    item.toDomain()
+                }
             )
         } catch (exception: CancellationException) {
             throw exception
@@ -71,5 +115,17 @@ class AddonRepositoryImpl(
 
     override suspend fun removeAddon(addonId: String) {
         addonDao.deleteById(addonId)
+    }
+
+    private fun resolveUrl(
+        baseUrl: String,
+        endpoint: String
+    ): String {
+        return URI(baseUrl).resolve(endpoint).toString()
+    }
+
+    private fun isValidHttpUrl(url: String): Boolean {
+        val parsed = url.toHttpUrlOrNull()
+        return parsed?.scheme == "http" || parsed?.scheme == "https"
     }
 }

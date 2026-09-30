@@ -9,5 +9,6 @@ data class InstalledAddonEntity(
     val id: String,
     val name: String,
     val baseUrl: String,
-    val version: String
+    val version: String,
+    val mediaItemsUrl: String? = null
 )

@@ -8,6 +8,7 @@ fun InstalledAddonEntity.toDomain(): InstalledAddon {
         id = id,
         name = name,
         baseUrl = baseUrl,
-        version = version
+        version = version,
+        mediaItemsUrl = mediaItemsUrl
     )
 }

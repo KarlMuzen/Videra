@@ -15,7 +15,8 @@ data class AddonManifestDto(
     val id: String,
     val name: String,
     val version: String,
-    val supportedTypes: List<MediaTypeDto>
+    val supportedTypes: List<MediaTypeDto>,
+    val mediaItemsUrl: String? = null
 )
 
 @Serializable
