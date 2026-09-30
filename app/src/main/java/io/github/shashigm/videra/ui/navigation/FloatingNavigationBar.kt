@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +37,17 @@ fun FloatingNavigationBar(
             .fillMaxWidth()
             .navigationBarsPadding()
     ) {
+        val itemColors = NavigationBarItemDefaults.colors(
+            selectedIconColor = Color.White,
+            selectedTextColor = Color.White,
+            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f),
+            unselectedIconColor = Color.White.copy(alpha = 0.6f),
+            unselectedTextColor = Color.White.copy(alpha = 0.6f),
+            disabledIconColor = Color.White.copy(alpha = 0.38f),
+            disabledTextColor = Color.White.copy(alpha = 0.38f)
+        )
+
+
         if (feedSelected) {
             Box(
                 modifier = Modifier
@@ -87,7 +99,8 @@ fun FloatingNavigationBar(
                                 contentDescription = screen.label
                             )
                         },
-                        label = { Text(screen.label) }
+                        label = { Text(screen.label) },
+                        colors = itemColors
                     )
                 }
             }
