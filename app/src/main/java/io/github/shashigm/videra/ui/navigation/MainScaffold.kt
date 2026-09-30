@@ -261,7 +261,7 @@ fun MainScaffold(
                 onNavigate = { screen ->
                     if (screen.route != currentRoute) {
                         navController.navigate(screen.route) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            popUpTo(Screen.Feed.route) {
                                 saveState = true
                             }
                             launchSingleTop = true
