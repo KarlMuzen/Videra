@@ -79,6 +79,15 @@ private fun ShortsPager(
     playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    if (items.isEmpty()) {
+        ShortsEmpty(
+            failures = failures,
+            onRefresh = onRefresh,
+            modifier = modifier
+        )
+        return
+    }
+
     val pagerState = rememberPagerState(
         initialPage = 0,
         pageCount = { items.size }
@@ -281,9 +290,9 @@ private fun ShortsEmpty(
         ) {
             Text(
                 text = if (failures.isEmpty()) {
-                    "No Shorts yet"
+                    "No episodes in your feed yet"
                 } else {
-                    "No Shorts available"
+                    "Feed unavailable"
                 },
                 style = MaterialTheme.typography.headlineSmall
             )

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -52,7 +53,9 @@ fun AddonManagerScreen(
     var deleteAddon by remember { mutableStateOf<InstalledAddon?>(null) }
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .statusBarsPadding()
     ) {
         Row(
             modifier = Modifier
@@ -116,7 +119,7 @@ fun AddonManagerScreen(
                         style = MaterialTheme.typography.headlineSmall
                     )
                     Text(
-                        text = "Add a remote Videra manifest URL to provide content to Home, Search, and Shorts.",
+                        text = "Add a remote Videra manifest URL to provide content to Discover, Search, and Feed.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Button(onClick = { showAddDialog = true }) {

@@ -55,3 +55,12 @@ PR #12 is the single Phase 13 pull request.
 
 ## Next Immediate Step
 Verify the final PR Debug APK workflow on the final branch head. Resolve any CI build errors before merging PR #12.
+
+
+## Diagnostics / Insets Hardening
+- Added persistent CrashHandler uncaught-exception logging under `last_crash_log`.
+- Previous-session crash traces are surfaced on startup with copy and clear actions.
+- Settings includes a Diagnostics & Logs card.
+- Top-level content applies status bar insets to avoid camera-cutout/status-bar overlap.
+- Floating navigation inner vertical padding is tightened to 4.dp.
+- ShortsPager exits to its empty state before constructing a pager when the feed has zero items.

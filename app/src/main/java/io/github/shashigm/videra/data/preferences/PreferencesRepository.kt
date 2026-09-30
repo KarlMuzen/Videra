@@ -34,6 +34,7 @@ class PreferencesRepository(
         private const val KEY_ONBOARDING_COMPLETED = "onboardingCompleted"
         private const val KEY_APP_THEME = "app_theme"
         private const val LEGACY_KEY_APP_THEME = "appTheme"
+        private const val KEY_LAST_CRASH_LOG = "last_crash_log"
     }
 
     private val sharedPreferences = context.applicationContext.getSharedPreferences(
@@ -73,5 +74,15 @@ class PreferencesRepository(
             .putString(KEY_APP_THEME, theme.name)
             .apply()
         _appTheme.value = theme
+    }
+
+    fun getLastCrashLog(): String? {
+        return sharedPreferences.getString(KEY_LAST_CRASH_LOG, null)
+    }
+
+    fun clearLastCrashLog() {
+        sharedPreferences.edit()
+            .remove(KEY_LAST_CRASH_LOG)
+            .apply()
     }
 }

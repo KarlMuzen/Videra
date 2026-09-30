@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButton
@@ -23,6 +24,8 @@ fun SettingsScreen(
     appTheme: AppTheme,
     onThemeChanged: (AppTheme) -> Unit,
     onManageAddons: () -> Unit,
+    lastCrashLog: String?,
+    onClearLogs: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -67,6 +70,41 @@ fun SettingsScreen(
                         )
                     ) {
                         Text(label)
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Diagnostics & Logs",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    if (lastCrashLog.isNullOrBlank()) {
+                        Text(
+                            text = "No crashes recorded",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        Text(
+                            text = lastCrashLog
+                                .lineSequence()
+                                .take(4)
+                                .joinToString("\n"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        TextButton(onClick = onClearLogs) {
+                            Text("Clear Logs")
+                        }
                     }
                 }
             }
