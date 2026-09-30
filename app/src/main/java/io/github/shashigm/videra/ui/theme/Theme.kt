@@ -1,12 +1,9 @@
 package io.github.shashigm.videra.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import io.github.shashigm.videra.data.preferences.AppTheme
 
 private val VelvetRedScheme = darkColorScheme(
     primary = VelvetRedPrimary,
@@ -30,39 +27,25 @@ private val OledBlackScheme = darkColorScheme(
     onSurfaceVariant = ColorTokens.OledBlackOnSurfaceVariant
 )
 
-private val SystemLightScheme = lightColorScheme()
-private val SystemDarkScheme = darkColorScheme()
-
 private object ColorTokens {
-    val VelvetRedSurfaceVariant = androidx.compose.ui.graphics.Color(0xFF35151B)
-    val VelvetRedOnSurfaceVariant = androidx.compose.ui.graphics.Color(0xFFE5BFC5)
+    val VelvetRedSurfaceVariant = androidx.compose.ui.graphics.Color(0xFF3A121A)
+    val VelvetRedOnSurfaceVariant = androidx.compose.ui.graphics.Color(0xFFE7C1C7)
     val OledBlackSurfaceVariant = androidx.compose.ui.graphics.Color(0xFF242424)
     val OledBlackOnSurfaceVariant = androidx.compose.ui.graphics.Color(0xFFCACACA)
 }
 
 @Composable
 fun VideraTheme(
-    appTheme: String,
+    appTheme: AppTheme,
     content: @Composable () -> Unit
 ) {
-    val darkSystem = isSystemInDarkTheme()
-    val context = LocalContext.current
-    val systemScheme = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && darkSystem ->
-            androidx.compose.material3.dynamicDarkColorScheme(context)
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            androidx.compose.material3.dynamicLightColorScheme(context)
-        darkSystem -> SystemDarkScheme
-        else -> SystemLightScheme
-    }
-    val scheme = when (appTheme.trim()) {
-        "OLED_BLACK" -> OledBlackScheme
-        "VELVET_RED" -> VelvetRedScheme
-        else -> systemScheme
+    val colorScheme = when (appTheme) {
+        AppTheme.VELVET_RED -> VelvetRedScheme
+        AppTheme.OLED_BLACK -> OledBlackScheme
     }
 
     MaterialTheme(
-        colorScheme = scheme,
+        colorScheme = colorScheme,
         content = content
     )
 }
