@@ -80,9 +80,13 @@ class PreferencesRepository(
         return sharedPreferences.getString(KEY_LAST_CRASH_LOG, null)
     }
 
+    private val _lastCrashLog = MutableStateFlow(getLastCrashLog())
+    val lastCrashLog: StateFlow<String?> = _lastCrashLog.asStateFlow()
+
     fun clearLastCrashLog() {
         sharedPreferences.edit()
             .remove(KEY_LAST_CRASH_LOG)
             .apply()
+        _lastCrashLog.value = null
     }
 }

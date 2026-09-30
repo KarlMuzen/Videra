@@ -9,9 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -79,9 +77,9 @@ fun MainScaffold(
         .appTheme
         .collectAsStateWithLifecycle()
 
-    var lastCrashLog by remember(preferencesRepository) {
-        mutableStateOf(preferencesRepository.getLastCrashLog())
-    }
+    val lastCrashLog by preferencesRepository
+        .lastCrashLog
+        .collectAsStateWithLifecycle()
 
     DisposableEffect(lifecycleOwner, playerController) {
         val observer = LifecycleEventObserver { _, event ->
@@ -237,10 +235,7 @@ fun MainScaffold(
                     appTheme = appTheme,
                     onThemeChanged = preferencesRepository::setTheme,
                     lastCrashLog = lastCrashLog,
-                    onClearLogs = {
-                        preferencesRepository.clearLastCrashLog()
-                        lastCrashLog = null
-                    },
+                    onClearLogs = preferencesRepository::clearLastCrashLog,
                     onManageAddons = {
                         navController.navigate(Screen.AddonManager.route) {
                             launchSingleTop = true

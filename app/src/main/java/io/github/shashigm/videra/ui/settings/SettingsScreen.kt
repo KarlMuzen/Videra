@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +32,7 @@ fun SettingsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -101,10 +103,13 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
 
-                        TextButton(onClick = onClearLogs) {
-                            Text("Clear Logs")
-                        }
+                    TextButton(
+                        onClick = onClearLogs,
+                        enabled = !lastCrashLog.isNullOrBlank()
+                    ) {
+                        Text("Clear Logs")
                     }
                 }
             }

@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
                         )
                     },
                     onDismissAndClear = {
-                        CrashHandler.clearLastCrashLog(applicationContext)
+                        appContainer.preferencesRepository.clearLastCrashLog()
                         showCrashDialog = false
                     }
                 )
