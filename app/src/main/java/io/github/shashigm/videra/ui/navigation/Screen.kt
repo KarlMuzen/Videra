@@ -54,6 +54,13 @@ sealed class Screen(
         outlinedIcon = Icons.Outlined.Settings
     )
 
+    data object Player : Screen(
+        route = "player",
+        label = "Player",
+        filledIcon = Icons.Filled.SmartDisplay,
+        outlinedIcon = Icons.Outlined.SmartDisplay
+    )
+
     companion object {
         val topLevelDestinations: List<Screen> = listOf(
             Home,
