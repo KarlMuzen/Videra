@@ -133,8 +133,7 @@ private fun ShortsPager(
 
                         Text(
                             text = failures.joinToString(
-                                separator = "
-"
+                                separator = " • "
                             ) { failure ->
                                 failure.addon.name + ": " + failure.message
                             },
@@ -274,8 +273,7 @@ private fun ShortsEmpty(
                 ) {
                     Text(
                         text = failures.joinToString(
-                            separator = "
-"
+                            separator = " • "
                         ) { failure ->
                             failure.addon.name + ": " + failure.message
                         },
