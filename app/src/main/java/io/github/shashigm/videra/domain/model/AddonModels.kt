@@ -15,13 +15,21 @@ data class AddonManifest(
     val mediaItemsUrl: String? = null
 )
 
+data class Episode(
+    val number: Int,
+    val title: String,
+    val streams: List<Stream>,
+    val durationSeconds: Long? = null
+)
+
 data class MediaItem(
     val id: String,
     val title: String,
     val posterUrl: String?,
     val bannerUrl: String?,
     val type: MediaType,
-    val streams: List<Stream> = emptyList()
+    val streams: List<Stream> = emptyList(),
+    val episodes: List<Episode> = emptyList()
 )
 
 data class Stream(
