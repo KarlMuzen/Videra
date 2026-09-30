@@ -31,10 +31,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.usecase.ShortsAddonFailure
+import io.github.shashigm.videra.media.player.PlayerPlaybackState
+import io.github.shashigm.videra.ui.player.PlayerSurface
+import io.github.shashigm.videra.ui.player.PlayerViewModel
 
 @Composable
 fun ShortsScreen(
     viewModel: ShortsViewModel,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -65,6 +69,7 @@ fun ShortsScreen(
                 items = state.feed.items,
                 failures = state.feed.failures,
                 onRefresh = viewModel::refresh,
+                playerViewModel = playerViewModel,
                 modifier = modifier
             )
         }
@@ -76,12 +81,14 @@ private fun ShortsPager(
     items: List<MediaItem>,
     failures: List<ShortsAddonFailure>,
     onRefresh: () -> Unit,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
         initialPage = 0,
         pageCount = { items.size }
     )
+    val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(items.size) {
         if (items.isNotEmpty()) {
@@ -91,18 +98,78 @@ private fun ShortsPager(
         }
     }
 
+    val activeItem = items.getOrNull(pagerState.currentPage)
+    val playerMatchesActiveItem = activeItem != null &&
+        playerState.currentMedia == activeItem
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        if (playerMatchesActiveItem) {
+            PlayerSurface(
+                player = playerViewModel.player,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
         VerticalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(0.dp)
         ) { page ->
             items.getOrNull(page)?.let { item ->
-                ShortItemPage(item = item)
+                ShortItemPage(
+                    item = item,
+                    isActive = pagerState.currentPage == page,
+                    showVideo = playerState.currentMedia == item,
+                    playerViewModel = playerViewModel
+                )
+            }
+        }
+
+        if (playerMatchesActiveItem) {
+            when (playerState.playbackState) {
+                PlayerPlaybackState.LOADING,
+                PlayerPlaybackState.BUFFERING -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                PlayerPlaybackState.ERROR -> {
+                    Card(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .safeDrawingPadding()
+                            .padding(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Playback error",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Text(
+                                text = playerState.errorMessage
+                                    ?: "Video playback failed.",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            Button(onClick = playerViewModel::retry) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                }
+
+                else -> Unit
             }
         }
 
@@ -150,34 +217,49 @@ private fun ShortsPager(
 @Composable
 private fun ShortItemPage(
     item: MediaItem,
+    isActive: Boolean,
+    showVideo: Boolean,
+    playerViewModel: PlayerViewModel,
     modifier: Modifier = Modifier
 ) {
+    LaunchedEffect(item.id, isActive) {
+        if (isActive) {
+            playerViewModel.play(item)
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-    ) {
-        val artwork = item.bannerUrl ?: item.posterUrl
-
-        if (artwork != null) {
-            AsyncImage(
-                model = artwork,
-                contentDescription = item.title,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No artwork",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            .background(
+                MaterialTheme.colorScheme.surface.copy(
+                    alpha = if (showVideo) 0f else 1f
                 )
+            )
+    ) {
+        if (!showVideo) {
+            val artwork = item.bannerUrl ?: item.posterUrl
+
+            if (artwork != null) {
+                AsyncImage(
+                    model = artwork,
+                    contentDescription = item.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No artwork",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
 
@@ -210,7 +292,11 @@ private fun ShortItemPage(
                 )
 
                 Text(
-                    text = "Playback will be connected in Phase 8.",
+                    text = if (item.streams.isEmpty()) {
+                        "Development test stream"
+                    } else {
+                        "Swipe to change Shorts"
+                    },
                     style = MaterialTheme.typography.bodySmall
                 )
             }

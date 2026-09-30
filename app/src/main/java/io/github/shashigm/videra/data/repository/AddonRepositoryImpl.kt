@@ -9,6 +9,7 @@ import io.github.shashigm.videra.domain.common.Resource
 import io.github.shashigm.videra.domain.model.AddonManifest
 import io.github.shashigm.videra.domain.model.InstalledAddon
 import io.github.shashigm.videra.domain.model.MediaItem
+import io.github.shashigm.videra.domain.model.Stream
 import io.github.shashigm.videra.domain.repository.AddonRepository
 import java.net.URI
 import kotlinx.coroutines.CancellationException
@@ -103,7 +104,15 @@ class AddonRepositoryImpl(
         return try {
             Resource.Success(
                 api.getMediaItems(endpoint).map { item ->
-                    item.toDomain()
+                    item.toDomain().copy(
+                        streams = item.streams.map { stream ->
+                            Stream(
+                                url = stream.url,
+                                quality = stream.quality,
+                                subtitles = stream.subtitles
+                            )
+                        }
+                    )
                 }
             )
         } catch (exception: CancellationException) {

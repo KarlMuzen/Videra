@@ -34,6 +34,7 @@ import io.github.shashigm.videra.domain.usecase.HomeFeedSection
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -41,6 +42,7 @@ fun HomeScreen(
     HomeContent(
         state = uiState,
         onRefresh = viewModel::refresh,
+        onItemClick = onItemClick,
         modifier = modifier
     )
 }
@@ -49,6 +51,7 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeUiState,
     onRefresh: () -> Unit,
+    onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     when (state) {
@@ -80,7 +83,8 @@ private fun HomeContent(
             HomeFeedList(
                 feed = state.feed,
                 modifier = modifier,
-                onRefresh = onRefresh
+                onRefresh = onRefresh,
+                onItemClick = onItemClick
             )
         }
     }
@@ -90,6 +94,7 @@ private fun HomeContent(
 private fun HomeFeedList(
     feed: HomeFeed,
     onRefresh: () -> Unit,
+    onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -151,7 +156,10 @@ private fun HomeFeedList(
             items = feed.sections,
             key = { section -> section.addon.id }
         ) { section ->
-            HomeFeedSectionRow(section)
+            HomeFeedSectionRow(
+                section = section,
+                onItemClick = onItemClick
+            )
         }
     }
 }
@@ -159,6 +167,7 @@ private fun HomeFeedList(
 @Composable
 private fun HomeFeedSectionRow(
     section: HomeFeedSection,
+    onItemClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -178,7 +187,10 @@ private fun HomeFeedSectionRow(
                 items = section.items,
                 key = { item -> item.id }
             ) { item ->
-                MediaItemCard(item)
+                MediaItemCard(
+                    item = item,
+                    onClick = { onItemClick(item) }
+                )
             }
         }
     }
@@ -187,9 +199,11 @@ private fun HomeFeedSectionRow(
 @Composable
 private fun MediaItemCard(
     item: MediaItem,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier.width(150.dp)
     ) {
         Column {

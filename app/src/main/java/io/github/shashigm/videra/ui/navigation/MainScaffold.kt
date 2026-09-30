@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -14,10 +13,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
@@ -25,9 +28,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.shashigm.videra.domain.repository.AddonRepository
+import io.github.shashigm.videra.media.player.PlayerController
 import io.github.shashigm.videra.ui.home.HomeScreen
 import io.github.shashigm.videra.ui.home.HomeViewModel
 import io.github.shashigm.videra.ui.home.HomeViewModelFactory
+import io.github.shashigm.videra.ui.player.MiniPlayer
+import io.github.shashigm.videra.ui.player.PlayerScreen
+import io.github.shashigm.videra.ui.player.PlayerViewModel
+import io.github.shashigm.videra.ui.player.PlayerViewModelFactory
 import io.github.shashigm.videra.ui.settings.SettingsScreen
 import io.github.shashigm.videra.ui.settings.SettingsViewModel
 import io.github.shashigm.videra.ui.settings.SettingsViewModelFactory
@@ -38,8 +46,33 @@ import io.github.shashigm.videra.ui.shorts.ShortsViewModelFactory
 @Composable
 fun MainScaffold(
     addonRepository: AddonRepository,
+    playerController: PlayerController,
     modifier: Modifier = Modifier
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner, playerController) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> {
+                    playerController.pause()
+                }
+
+                Lifecycle.Event.ON_DESTROY -> {
+                    playerController.release()
+                }
+
+                else -> Unit
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -53,62 +86,69 @@ fun MainScaffold(
     val shortsViewModel: ShortsViewModel = viewModel(
         factory = ShortsViewModelFactory(addonRepository)
     )
+    val playerViewModel: PlayerViewModel = viewModel(
+        factory = PlayerViewModelFactory(playerController)
+    )
+
+    val isPlayerRoute = currentDestination?.route == Screen.Player.route
+    val isImmersiveRoute = isPlayerRoute ||
+        currentDestination?.route == Screen.Shorts.route
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                )
+            if (!isPlayerRoute) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    MiniPlayer(
+                        viewModel = playerViewModel
+                    )
 
-                NavigationBar {
-                    Screen.topLevelDestinations.forEach { screen ->
-                        val selected = currentDestination
-                            ?.hierarchy
-                            ?.any { destination ->
-                                destination.route == screen.route
-                            } == true
+                    NavigationBar {
+                        Screen.topLevelDestinations.forEach { screen ->
+                            val selected = currentDestination
+                                ?.hierarchy
+                                ?.any { destination ->
+                                    destination.route == screen.route
+                                } == true
 
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (!selected) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(navController.graph.startDestinationId) {
-                                            saveState = true
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    if (!selected) {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(
+                                                navController.graph.startDestinationId
+                                            ) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selected) {
+                                            screen.filledIcon
+                                        } else {
+                                            screen.outlinedIcon
+                                        },
+                                        contentDescription = screen.label
+                                    )
+                                },
+                                label = {
+                                    Text(text = screen.label)
                                 }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) {
-                                        screen.filledIcon
-                                    } else {
-                                        screen.outlinedIcon
-                                    },
-                                    contentDescription = screen.label
-                                )
-                            },
-                            label = {
-                                Text(text = screen.label)
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
         }
     ) { innerPadding ->
-        val navContentModifier = if (
-            currentDestination?.route == Screen.Shorts.route
-        ) {
+        val navContentModifier = if (isImmersiveRoute) {
             Modifier.fillMaxSize()
         } else {
             Modifier.padding(innerPadding)
@@ -121,13 +161,20 @@ fun MainScaffold(
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
-                    viewModel = homeViewModel
+                    viewModel = homeViewModel,
+                    onItemClick = { item ->
+                        playerViewModel.play(item)
+                        navController.navigate(Screen.Player.route) {
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
 
             composable(Screen.Shorts.route) {
                 ShortsScreen(
-                    viewModel = shortsViewModel
+                    viewModel = shortsViewModel,
+                    playerViewModel = playerViewModel
                 )
             }
 
@@ -142,6 +189,15 @@ fun MainScaffold(
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     viewModel = settingsViewModel
+                )
+            }
+
+            composable(Screen.Player.route) {
+                PlayerScreen(
+                    viewModel = playerViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
                 )
             }
         }
