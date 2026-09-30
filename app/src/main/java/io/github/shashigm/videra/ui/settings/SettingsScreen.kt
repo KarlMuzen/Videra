@@ -116,7 +116,7 @@ fun SettingsScreen(
 
                     uiState.errorMessage != null -> {
                         Text(
-                            text = uiState.errorMessage,
+                            text = uiState.errorMessage.orEmpty(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -124,7 +124,7 @@ fun SettingsScreen(
 
                     uiState.successMessage != null -> {
                         Text(
-                            text = uiState.successMessage,
+                            text = uiState.successMessage.orEmpty(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -199,6 +199,12 @@ private fun InstalledAddonCard(
                 Text(
                     text = addon.name,
                     style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = "Status: Installed",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Text(
