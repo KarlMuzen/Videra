@@ -45,6 +45,13 @@ Implemented:
 - No scraper or provider-specific extraction logic was added.
 - No second playback engine or additional playback framework was added.
 
+## Build Fixes Found During Phase 8 Validation
+- CI Run #16: `./gradlew` was missing from the repository. Added an executable `gradlew` launcher with Git mode `100755`.
+- CI Run #17: Kotlin compilation failed on a missing `androidx.compose.ui.unit.dp` import in `MainScaffold.kt`. Added the import.
+- CI Run #18: full debug assembly and APK upload passed.
+- CI Run #19: documentation synchronization build passed.
+- CI Run #20: final handover synchronization build passed.
+
 ## CI Workflow
 Updated `.github/workflows/pr-debug-build.yml`:
 - Debug build command is exactly:
@@ -80,7 +87,7 @@ Verified against current Android/Media3 documentation:
 PR #7:
 - `feature/media3-player` -> `main`
 - Open, not merged.
-- Current PR head: `12d5cd4c844ff77ece029472cf552b7d959acd04`
+- Current PR head: `696ce743969811d2db21e9011a770265770e1a1d`
 - Current `main`: `f3746992ab0aa6b1fd317d8fc27c2cb98aa7fa62`
 - Feature branch is 0 commits behind `main`.
 - Phase 7 PR #6 was merged before Phase 8 work.
