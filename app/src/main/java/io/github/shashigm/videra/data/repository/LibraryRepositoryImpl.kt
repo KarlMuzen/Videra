@@ -2,9 +2,9 @@ package io.github.shashigm.videra.data.repository
 
 import io.github.shashigm.videra.data.local.dao.LibraryDao
 import io.github.shashigm.videra.data.local.entity.LibraryEntity
-import io.github.shashigm.videra.data.local.mapper.InstalledAddonLibraryKey
 import io.github.shashigm.videra.data.local.mapper.toDomain
 import io.github.shashigm.videra.domain.model.InstalledAddon
+import io.github.shashigm.videra.domain.model.LibraryItem
 import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.repository.LibraryRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +14,7 @@ class LibraryRepositoryImpl(
     private val libraryDao: LibraryDao
 ) : LibraryRepository {
 
-    override fun observeSavedItems(): Flow<List<io.github.shashigm.videra.domain.model.LibraryItem>> {
+    override fun observeSavedItems(): Flow<List<LibraryItem>> {
         return libraryDao.observeSavedItems().map { entities ->
             entities.map { entity ->
                 entity.toDomain()
@@ -29,7 +29,7 @@ class LibraryRepositoryImpl(
         val stream = mediaItem.streams.firstOrNull()
         libraryDao.insert(
             LibraryEntity(
-                libraryKey = InstalledAddonLibraryKey(
+                libraryKey = libraryKey(
                     addonId = addon.id,
                     mediaId = mediaItem.id
                 ),
@@ -50,4 +50,9 @@ class LibraryRepositoryImpl(
     override suspend fun remove(libraryKey: String) {
         libraryDao.deleteByKey(libraryKey)
     }
+
+    private fun libraryKey(
+        addonId: String,
+        mediaId: String
+    ): String = "$addonId::$mediaId"
 }
