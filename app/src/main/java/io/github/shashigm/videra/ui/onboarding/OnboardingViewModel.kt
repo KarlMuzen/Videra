@@ -34,22 +34,32 @@ class OnboardingViewModel(
         viewModelScope.launch {
             _uiState.value = OnboardingUiState(isInstalling = true)
 
-            when (val result = installAddon(manifestUrl)) {
-                Resource.Loading -> Unit
+            try {
+                when (val result = installAddon(manifestUrl.trim())) {
+                    Resource.Loading -> Unit
 
-                is Resource.Success -> {
-                    preferencesRepository.setOnboardingCompleted(true)
-                    _uiState.value = OnboardingUiState()
-                    onSuccess()
-                }
+                    is Resource.Success -> {
+                        preferencesRepository.setOnboardingCompleted(true)
+                        _uiState.value = OnboardingUiState()
+                        onSuccess()
+                    }
 
-                is Resource.Error -> {
-                    _uiState.value = OnboardingUiState(
-                        errorMessage = result.throwable.message
-                            ?.takeIf { it.isNotBlank() }
-                            ?: "The add-on could not be installed."
-                    )
+                    is Resource.Error -> {
+                        _uiState.value = OnboardingUiState(
+                            errorMessage = result.throwable.message
+                                ?.takeIf { it.isNotBlank() }
+                                ?: "The add-on could not be installed."
+                        )
+                    }
                 }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _uiState.value = OnboardingUiState(
+                    errorMessage = exception.message
+                        ?.takeIf { it.isNotBlank() }
+                        ?: "The add-on could not be installed."
+                )
             }
         }
     }
