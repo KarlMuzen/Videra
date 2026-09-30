@@ -25,7 +25,6 @@ fun PlayerSurface(
             }
         },
         onRelease = { playerView ->
-            player.clearVideoSurface()
             playerView.player = null
             playerView.keepScreenOn = false
         }

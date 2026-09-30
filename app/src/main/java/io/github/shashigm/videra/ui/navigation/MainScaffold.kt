@@ -20,6 +20,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -84,23 +85,35 @@ fun MainScaffold(
     }
 
     val navController = rememberNavController()
+
+    DisposableEffect(navController, playerController) {
+        val listener = NavController.OnDestinationChangedListener {
+            _,
+            destination,
+            _ ->
+            val route = destination.route
+            val isVerticalPlayerRoute =
+                route == Screen.Player.route ||
+                    route == Screen.Shorts.route
+
+            if (!isVerticalPlayerRoute) {
+                playerController.pauseAndClearVideoSurface()
+            }
+        }
+
+        navController.addOnDestinationChangedListener(listener)
+
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+        }
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
     val isPlayerRoute = currentRoute == Screen.Player.route
     val isImmersiveRoute = isPlayerRoute ||
         currentRoute == Screen.Shorts.route
-
-    DisposableEffect(currentRoute, playerController) {
-        onDispose {
-            if (
-                currentRoute == Screen.Player.route ||
-                currentRoute == Screen.Shorts.route
-            ) {
-                playerController.pauseAndClearVideoSurface()
-            }
-        }
-    }
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(addonRepository)

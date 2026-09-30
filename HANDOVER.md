@@ -9,23 +9,23 @@ Phase 12 — Videra Micro-Drama pivot to a dedicated 9:16 vertical playback plat
 Implemented:
 - Removed the `MiniPlayer` composable and deleted `ui/player/MiniPlayer.kt`.
 - Removed the mini-player from `MainScaffold`; no mini-player is rendered above bottom navigation.
-- Bottom navigation is hidden on immersive vertical player routes so the player can occupy the complete window.
+- Bottom navigation is hidden on immersive vertical player routes so the Player and Shorts surfaces can occupy the complete window.
 - Replaced the legacy horizontal `PlayerScreen` with an edge-to-edge vertical `VerticalPager` player.
 - Reused one shared `ShortsOverlay` composable for both Shorts and the full-screen Player route.
 - The shared overlay contains title, add-on name, previous/next episode controls, and the `EP. X / N` episode pill with the same episode grid bottom sheet.
 - Home, Search, and Library now expose only `MICRO_DRAMA` content.
-- Home now passes the source `InstalledAddon` with each selected media item so episode progress is scoped correctly.
-- Search continues to retain the source add-on and now filters the catalog to `MICRO_DRAMA`.
+- Home passes the source `InstalledAddon` with each selected media item so episode progress is scoped correctly.
+- Search retains the source add-on and filters the catalog to `MICRO_DRAMA`.
 - Library filters legacy non-micro-drama entries out of the active UI.
 - Library playback resolves the current installed add-on catalog before starting playback so fresh episode metadata can be used when the saved library snapshot does not contain episode details.
 - Library snapshots also receive the five-episode development fallback locally for saved `MICRO_DRAMA` items when an add-on cannot be resolved.
-- The single `PlayerViewModel` now owns player selection, episode selection, watch-progress restore, and progress persistence for both Player and Shorts routes.
-- Manual DI now injects `AddonRepository`, `EpisodeProgressRepository`, and the single global `PlayerController` into `PlayerViewModel`.
-- `PlayerSurface` no longer exposes Media3's built-in playback controller and uses zoom/crop rendering for full-bleed vertical presentation.
+- The single `PlayerViewModel` owns player selection, episode selection, watch-progress restore, and progress persistence for both Player and Shorts routes.
+- Manual DI injects `AddonRepository`, `EpisodeProgressRepository`, and the single global `PlayerController` into `PlayerViewModel`.
+- `PlayerSurface` disables Media3's built-in playback controller and uses zoom/crop rendering for full-bleed vertical presentation.
 - The global `PlayerController` explicitly supports `pauseAndClearVideoSurface()`, `clearVideoSurface()`, and controller-owned resume for player re-entry.
-- The navigation lifecycle clears the video surface when leaving the active vertical player routes.
+- Navigation destination changes clear and pause the player before entering any non-vertical route, preventing an old route's surface from clearing a newly attached surface.
+- `PlayerSurface.onRelease` only detaches its local `PlayerView`; it does not globally clear the player surface, avoiding cross-route surface contention.
 - Activity `ON_STOP` pauses playback and clears the video surface; `ON_DESTROY` releases the single global `ExoPlayer`.
-- `PlayerSurface.onRelease` also clears the Media3 video surface before detaching the `PlayerView`.
 - `enableEdgeToEdge()` remains active in `MainActivity`, while player overlays use `safeDrawingPadding()` so system gesture areas do not cover controls.
 - Home, Search, Library, Settings, Add-on Manager, Room v5, Retrofit/Kotlinx Serialization, and the single global Media3 player architecture remain intact.
 - No second player, mini-player, scraper, provider-specific extraction, Hilt/Dagger, XML, Gson, or Moshi was introduced.
@@ -45,10 +45,11 @@ Implemented:
 ## Surface and Lifecycle Semantics
 
 - There is still exactly one app-scoped `ExoPlayer`.
-- The player surface is attached only by the active vertical player route.
-- Leaving Player or Shorts calls `pauseAndClearVideoSurface()` through the navigation disposal effect.
+- The player surface is attached only by the active vertical Player or Shorts route.
+- When Navigation moves from Player or Shorts to a non-vertical route, the destination listener calls `pauseAndClearVideoSurface()` before the new route owns the player surface.
+- Moving between Player and Shorts preserves the single active player while allowing the new route to attach its surface without the old route clearing it.
 - Leaving the app pauses playback and clears the surface through the activity lifecycle observer.
-- `PlayerSurface.onRelease` also clears the Media3 video surface before detaching the `PlayerView`.
+- `PlayerSurface.onRelease` detaches only its own `PlayerView`; global surface clearing remains centralized in `PlayerController` and navigation/lifecycle code.
 - The old horizontal Media3 controller UI is disabled.
 
 ## Reactive Add-on Boundary
@@ -66,8 +67,8 @@ Implemented:
 - `VerticalPager`, `PlayerSurface`, overlays, and system-inset handling all use `Modifier.fillMaxSize()` with `safeDrawingPadding()` only on controls that need inset protection.
 - `PlayerViewModelFactory` is wired with all required dependencies.
 - Progress persistence catches ordinary database failures without breaking playback and always rethrows `CancellationException`.
-- The active player is matched by both add-on id and media id, avoiding cross-add-on media id collisions.
-- No `MiniPlayer` references remain in `MainScaffold`.
+- The active player selection is matched by both add-on id and media id, avoiding cross-add-on media id collisions.
+- `MiniPlayer.kt` is removed and no `MiniPlayer` import remains in `MainScaffold`.
 
 ## Room Database
 
@@ -122,6 +123,10 @@ Target:
 
 One feature branch and one PR are used for the pivot. No supporting branch is required.
 
+PR #11:
+
+`feature/micro-drama-pivot` -> `main`
+
 ## Git Workflow Rule
 
 - `main` is the permanent integration branch.
@@ -131,4 +136,4 @@ One feature branch and one PR are used for the pivot. No supporting branch is re
 
 ## Next Immediate Step
 
-Verify the final PR Debug APK run for the Phase 12 branch, review the changed navigation/player wiring, then merge the single Phase 12 PR into `main`.
+Verify the newest PR Debug APK run for the final Phase 12 branch head, review the navigation/player diff, then merge the single Phase 12 PR into `main`.
