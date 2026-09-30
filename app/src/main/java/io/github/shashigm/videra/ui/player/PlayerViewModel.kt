@@ -58,7 +58,7 @@ class PlayerViewModel(
 
     private companion object {
         val BIG_BUCK_BUNNY_STREAM = Stream(
-            url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            url = "https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4",
             quality = "Development test stream",
             subtitles = emptyList()
         )
