@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -64,9 +65,14 @@ fun MainScaffold(
     modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val onboardingCompleted by preferencesRepository
-        .onboardingCompleted
-        .collectAsStateWithLifecycle()
+    val startDestination = remember(preferencesRepository) {
+        if (preferencesRepository.isOnboardingCompleted()) {
+            Screen.Feed.route
+        } else {
+            Screen.Onboarding.route
+        }
+    }
+
     val appTheme by preferencesRepository
         .appTheme
         .collectAsStateWithLifecycle()
@@ -148,11 +154,7 @@ fun MainScaffold(
     ) {
         NavHost(
             navController = navController,
-            startDestination = if (onboardingCompleted) {
-                Screen.Feed.route
-            } else {
-                Screen.Onboarding.route
-            },
+            startDestination = startDestination,
             modifier = Modifier.fillMaxSize()
         ) {
             composable(Screen.Onboarding.route) {
