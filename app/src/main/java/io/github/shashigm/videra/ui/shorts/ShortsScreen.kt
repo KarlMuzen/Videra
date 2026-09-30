@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import io.github.shashigm.videra.domain.model.MediaItem
+import io.github.shashigm.videra.domain.usecase.ShortsAddonFailure
 
 @Composable
 fun ShortsScreen(
@@ -132,7 +133,8 @@ private fun ShortsPager(
 
                         Text(
                             text = failures.joinToString(
-                                separator = "\n"
+                                separator = "
+"
                             ) { failure ->
                                 failure.addon.name + ": " + failure.message
                             },
@@ -272,7 +274,8 @@ private fun ShortsEmpty(
                 ) {
                     Text(
                         text = failures.joinToString(
-                            separator = "\n"
+                            separator = "
+"
                         ) { failure ->
                             failure.addon.name + ": " + failure.message
                         },
