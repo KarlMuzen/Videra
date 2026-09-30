@@ -73,7 +73,7 @@ Checked against current Android/Media3 documentation:
 PR #7:
 - `feature/media3-player` -> `main`
 - Open, not merged.
-- Current PR head: `fdf9f4f5f893b21b7d8acfe11a5cc25804fb3068`
+- Current PR head: `fd59830aa49809c25e5454744d387a9af657e1ce`
 - Current `main`: `f3746992ab0aa6b1fd317d8fc27c2cb98aa7fa62`
 - Feature branch is 0 commits behind `main`.
 - PR is currently mergeable.
@@ -89,8 +89,8 @@ PR #7:
 ## CI Status
 Latest PR Debug APK verification:
 - Workflow: `PR Debug APK`
-- Run: #22
-- Tested PR head: `fdf9f4f5f893b21b7d8acfe11a5cc25804fb3068`
+- Run: #23
+- Tested PR head: `fd59830aa49809c25e5454744d387a9af657e1ce`
 - Result: success
 - `Assemble Debug`: success
 - `Upload Debug APK`: success
