@@ -133,7 +133,7 @@ fun PlayerScreen(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
-                                    text = "Stream URL: \${
+                                    text = "Stream URL: ${
                                         state.attemptedStreamUrl
                                             ?: "Unavailable"
                                     }",
@@ -141,7 +141,7 @@ fun PlayerScreen(
                                 )
 
                                 Text(
-                                    text = "Media3 error code: \${
+                                    text = "Media3 error code: ${
                                         state.errorCodeName
                                             ?: "Unavailable"
                                     }",
@@ -149,7 +149,7 @@ fun PlayerScreen(
                                 )
 
                                 Text(
-                                    text = "Exception message: \${
+                                    text = "Exception message: ${
                                         state.errorCauseMessage
                                             ?: "Unavailable"
                                     }",
@@ -189,15 +189,15 @@ fun PlayerScreen(
 private fun buildDiagnostics(state: PlayerState): String =
     buildString {
         appendLine("Videra playback diagnostics")
-        appendLine("Media: \${state.currentMedia?.title ?: "Unavailable"}")
+        appendLine("Media: ${state.currentMedia?.title ?: "Unavailable"}")
         appendLine(
-            "Stream URL: \${state.attemptedStreamUrl ?: "Unavailable"}"
+            "Stream URL: ${state.attemptedStreamUrl ?: "Unavailable"}"
         )
         appendLine(
-            "Media3 error code: \${state.errorCodeName ?: "Unavailable"}"
+            "Media3 error code: ${state.errorCodeName ?: "Unavailable"}"
         )
         appendLine(
-            "Exception message: \${
+            "Exception message: ${
                 state.errorCauseMessage ?: "Unavailable"
             }"
         )
