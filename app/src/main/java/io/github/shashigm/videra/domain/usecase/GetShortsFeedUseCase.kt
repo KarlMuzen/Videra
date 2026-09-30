@@ -9,8 +9,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 
+data class ShortsFeedItem(
+    val addon: InstalledAddon,
+    val mediaItem: MediaItem
+)
+
 data class ShortsFeed(
-    val items: List<MediaItem>,
+    val items: List<ShortsFeedItem>,
     val failures: List<ShortsAddonFailure>
 )
 
@@ -42,7 +47,7 @@ class GetShortsFeedUseCase(
             }.awaitAll()
         }
 
-        val items = linkedMapOf<String, MediaItem>()
+        val items = linkedMapOf<String, ShortsFeedItem>()
         val failures = mutableListOf<ShortsAddonFailure>()
 
         outcomes.forEach { (addon, result) ->
@@ -58,7 +63,10 @@ class GetShortsFeedUseCase(
                         .forEach { item ->
                             items.putIfAbsent(
                                 addon.id + ":" + item.id,
-                                item
+                                ShortsFeedItem(
+                                    addon = addon,
+                                    mediaItem = item
+                                )
                             )
                         }
                 }
