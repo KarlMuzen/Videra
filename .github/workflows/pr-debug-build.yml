@@ -37,7 +37,7 @@ jobs:
           gradle-version: "9.5.0"
 
       - name: Assemble Debug
-        run: gradle assembleDebug --no-daemon
+        run: ./gradlew assembleDebug -x lint -x test
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
