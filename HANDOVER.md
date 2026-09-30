@@ -1,108 +1,100 @@
 # HANDOVER.md
 
 ## Current Branch
-feature/search-library
+feature/addon-manager
 
 ## Completed Task
-Phase 9 — Local Search and persistent Library.
+Phase 10 — Add-on Manager, persistent add-on state, and reactive enabled-only feeds.
 
 Implemented:
-- Added local catalog search across all currently installed add-ons.
-- Search catalog loading runs each installed add-on fetch in parallel inside `supervisorScope`; one add-on failure does not discard successful catalogs.
-- The search use-case loads the add-on media catalogs; `SearchViewModel` filters the loaded catalog locally by title as the user query changes, avoiding a network request for every keystroke.
-- Added `SearchResult`, `SearchAddonFailure`, and `SearchCatalog` domain models.
-- Added `SearchViewModel` with `StateFlow` UI state, dedicated query state, refresh support, and a manual `SearchViewModelFactory`.
-- Added Compose `SearchScreen` with a search `TextField`, adaptive result grid, Coil 3 artwork, empty/error states, refresh, partial add-on failure display, and bookmark controls.
-- Search result selection launches playback through the existing global `PlayerViewModel` / `PlayerController`.
-- Search result cards size to their adaptive grid cell so narrow phone widths do not overflow.
-- Added `LibraryEntity` and `LibraryDao` for durable bookmarked media snapshots.
-- Expanded `VideraDatabase` from version 2 to version 3 with an explicit 2->3 Room migration creating `library_items`.
-- Preserved the existing 1->2 migration for `installed_addons.mediaItemsUrl`.
-- Added `LibraryRepository` and `LibraryRepositoryImpl`.
-- Library saves use a stable key of `addonId::mediaId`, persist media metadata and the first available stream URL/quality, and retain insertion/update time.
-- Added `LibraryItem` domain model and entity-to-domain mapping.
-- Added `LibraryViewModel` with `StateFlow` loading/empty/success states and manual `LibraryViewModelFactory`.
-- Added Compose `LibraryScreen` with an adaptive saved-media grid, Coil 3 artwork, playback selection, and remove controls.
-- Injected `LibraryRepository` through `VideraAppContainer`.
-- Wired Search and Library into the existing bottom navigation destinations.
-- Search and Library playback commands reuse the single global Media3 player; no second player was introduced.
-- Existing Home, Shorts, Player, and Settings routes were preserved.
-- No scrapers, provider-specific extraction logic, or new dependencies were added.
-- CI workflow remains unchanged and uses exactly:
-  `./gradlew assembleDebug -x lint -x test`
+- Added `manifestUrl`, `customName`, `enabled`, and `cachedMetadataJson` to `InstalledAddonEntity`.
+- Expanded `VideraDatabase` from version 3 to version 4.
+- Added explicit Room migration 3 -> 4; existing add-ons keep their prior base URL as their manifest URL and remain enabled by default.
+- Added DAO support for finding add-ons, observing all installed add-ons, observing only enabled add-ons, toggling enabled state, and changing custom names.
+- Extended `InstalledAddon` with manifest name, manifest URL, custom name, enabled state, and cached metadata.
+- Added `InstallAddonUseCase` for HTTP/HTTPS manifest URL validation and the repository install boundary.
+- Kept Retrofit + Kotlinx Serialization as the remote manifest fetch/parse stack; no extra networking dependency was added.
+- Manifest validation requires non-blank id, name, version, and at least one supported media type.
+- Optional `mediaItemsUrl` is resolved against the manifest URL and must resolve to HTTP or HTTPS.
+- Successfully fetched manifests are cached locally as normalized JSON metadata.
+- Reinstalling an existing add-on preserves its enabled state and custom name while refreshing its manifest metadata.
+- Added `AddonManagerViewModel` with explicit validation, network, HTTP, parsing, and unknown error categories.
+- Added manual `AddonManagerViewModelFactory`.
+- Added dedicated `AddonManagerScreen` with add-manifest dialog, active/inactive state, enable/disable, rename, delete, and metadata-cache status.
+- Settings now opens Add-on Manager through a nested navigation route.
+- Add-on Manager ViewModel is scoped to the Add-on Manager navigation destination.
+- Home, Search, and Shorts now observe the database-backed enabled-only add-on Flow.
+- Room changes from install/remove/toggle propagate through StateFlow and cancel/restart in-flight feed collection via `collectLatest`.
+- The existing single global Media3 player remains unchanged and is reused by Home, Shorts, Search, and Library.
+- Library snapshots remain independent of installed add-on removal.
+- No scrapers, provider-specific extraction logic, XML, Hilt/Dagger, Gson, Moshi, or additional dependencies were added.
 
 ## Room Database
 Current schema:
-- Version: 3
+- Version: 4
 - Entities:
   - `InstalledAddonEntity`
   - `LibraryEntity`
 - Migrations:
   - 1 -> 2: adds `installed_addons.mediaItemsUrl`
   - 2 -> 3: creates `library_items`
-- Database creation uses the application context and registers both migrations explicitly.
-- Library bookmarks survive app restarts because data is stored in Room.
-- Saved library media is a metadata snapshot. When a remote stream was available at save time, its first URL and quality are stored for later playback. Additional streams/subtitles are not persisted in this phase.
+  - 3 -> 4: adds manifest URL, custom name, enabled state, and cached manifest metadata
+- Migration 3 -> 4 defaults existing add-ons to enabled and copies the previous `baseUrl` into the new `manifestUrl` column.
+- Database creation still uses the application context and registers all migrations explicitly.
 
-## Search Semantics
-- The repository has no provider-specific search/extraction layer; add-ons remain remote JSON sources.
-- All currently installed add-ons are treated as active because the existing `InstalledAddon` model has no enabled/disabled field.
-- The search catalog is fetched from each add-on's existing `mediaItemsUrl` endpoint through `AddonRepository`.
-- Title matching is case-insensitive and ignores leading/trailing query whitespace.
-- Blank query shows the search hint instead of returning the entire catalog.
-- Successful add-on responses are retained when another add-on fails.
-- If every installed add-on fails, the Search UI exposes the overall error state.
+## Add-on Fetch / Validation
+- Add-ons remain remote JSON sources; Videra contains no provider scraper.
+- Retrofit accepts an absolute manifest URL through the existing `@Url` API.
+- Kotlinx Serialization continues to ignore unknown JSON keys while requiring the declared manifest schema fields.
+- `InstallAddonUseCase` rejects non-HTTP/HTTPS URLs before network access.
+- Repository validation rejects blank required fields and invalid resolved media endpoints.
+- Serialization errors remain `SerializationException` so the UI can expose a parsing-specific error state.
+- Network/HTTP/database failures are converted into explicit manager UI errors without swallowing `CancellationException`.
+
+## Reactive Feed Semantics
+- `AddonRepository.observeEnabledAddons()` is the single database-backed source for active add-ons.
+- Home and Search use enabled add-ons only.
+- Shorts also uses enabled add-ons only so disabled providers do not continue feeding vertical content.
+- Search still filters the loaded enabled catalog locally by title rather than sending a request for every keystroke.
+- Installing an add-on creates an enabled row, which immediately changes the enabled Flow and starts feed loading.
+- Disabling an add-on removes it from the enabled Flow immediately and cancels the previous feed collection.
+- Re-enabling an add-on immediately starts loading it again.
+- Removing an add-on updates both installed and enabled Room Flows.
 
 ## Compose / ViewModel Verification
-- Search and Library use `collectAsStateWithLifecycle()`.
-- ViewModels use `viewModelScope` only for lifecycle-bound work.
-- CancellationException is rethrown instead of being swallowed.
-- `SearchViewModelFactory` and `LibraryViewModelFactory` use the same manual factory pattern already used by Home, Shorts, Settings, and Player.
-- `ColumnScope.weight()` is used without importing the scoped `weight` symbol; an explicit import caused CI failure under the current Compose API because it resolved to an internal symbol.
-- Search and Library cards use `fillMaxWidth()` inside adaptive grid cells rather than fixed widths.
-- Coil 3 continues to use `AsyncImage`.
-- No XML or Hilt/Dagger was added.
+- Search, Library, Settings, and Add-on Manager screens use lifecycle-aware StateFlow collection.
+- Add-on Manager operations run only in `viewModelScope`.
+- `CancellationException` is always rethrown.
+- All ViewModels continue to use manual factories; no service locator or Hilt/Dagger was introduced.
+- Scoped `Modifier.weight(1f)` is used without importing the internal `weight` symbol.
+- Add-on Manager list/empty content is constrained with scoped weight so it does not overflow the header area.
+- Destructive add-on removal requires confirmation.
 
-## CI Validation
-The first candidate build exposed real Compose defects and was corrected before completion:
-1. Run #30 was superseded by subsequent commits.
-2. Run #34 failed during Kotlin compilation because `androidx.compose.foundation.layout.weight` was explicitly imported in Search/Library files; current Compose resolves that import to an internal symbol.
-3. Removed the explicit `weight` imports and kept the valid scoped `Modifier.weight(1f)` calls inside the parent `Column` content.
-4. Run #35 completed successfully.
-5. Run #35 validated the source head:
-   `7bf9ccda2bf7c6a7f934fb926f12c12096bc43b8`
-6. `Assemble Debug` succeeded.
-7. The workflow command remained exactly:
-   `./gradlew assembleDebug -x lint -x test`
-11. Lint and tests are explicitly excluded by the workflow, so this phase has not been separately lint/test validated by CI.
+## CI Workflow
+- `.github/workflows/pr-debug-build.yml` remains unchanged.
+- Exact build command:
+  `./gradlew assembleDebug -x lint -x test`
+- CI intentionally excludes lint and tests from this PR build workflow.
+- The repository cannot be built from the model container because outbound GitHub DNS/network access is unavailable; GitHub Actions is the authoritative build validation.
 
-## Phase 8 Baseline
-Phase 8 / PR #7 is merged into `main`.
-- Merge commit / current main baseline:
-  `d1e9040486445c38244ad969c98e4e0b203742f0`
+## Phase 9 / Main Baseline
+- Phase 9 / PR #8 is merged into `main`.
+- Current Phase 9 main baseline:
+  `07d4d5275e27717454703071ce14053f02c1311a`
 - Global Media3 player remains app-scoped with one `ExoPlayer`.
-- Big Buck Bunny fallback is the official ExoPlayer test stream:
+- Big Buck Bunny development fallback remains:
   `https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4`
-- In-app playback diagnostics remain available for device debugging.
 - `android:usesCleartextTraffic="true"` remains enabled for development.
-- Physical-device validation remains required for real add-on stream behavior and decoder/network differences.
 
 ## Documentation Note
-A recursive GitHub tree check of current `main` found `HANDOVER.md` but no `BLUEPRINT.md` anywhere in the repository. Phase 9 was therefore implemented against the latest repository architecture available in `HANDOVER.md` and the existing source tree without inventing missing Blueprint requirements.
+A recursive GitHub tree check of current `main` found `HANDOVER.md` but no `BLUEPRINT.md` anywhere in the repository. Phase 10 was therefore implemented against the latest available handover and live source tree without inventing missing Blueprint requirements.
 
 ## Pull Request
-PR #8:
-- `feature/search-library` -> `main`
-- Open, not merged.
-- Current branch head:
-  `4d5fb519cdcf790e866c81fa72cd9a81cdf6eee2`
-- Last source-code validation head:
-  `7bf9ccda2bf7c6a7f934fb926f12c12096bc43b8`
-- Current `main`:
-  `d1e9040486445c38244ad969c98e4e0b203742f0`
-- Feature branch is 0 commits behind `main`.
-- One PR only for this Phase 9 feature branch.
+PR #9:
+- `feature/addon-manager` -> `main`
+- One feature branch and one PR for Phase 10.
 - No supporting branch was created.
+- PR is open; final merge should occur only after the newest PR Debug APK run succeeds.
 
 ## Git Workflow Rule
 - `main` is the permanent integration branch.
@@ -111,4 +103,5 @@ PR #8:
 - No mixing independent features into one PR.
 
 ## Next Immediate Step
-After PR #8 is reviewed and merged, continue to the next Blueprint-defined phase while preserving the single-player architecture, remote add-on JSON boundary, Room persistence, and lifecycle-safe StateFlow patterns.
+Verify the newest GitHub Actions run for the final branch head, then review and merge PR #9. After merge, continue with the next Blueprint-defined phase while preserving the remote JSON add-on boundary, Room persistence, single-player architecture, and lifecycle-safe StateFlow patterns.
+
