@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,7 +44,6 @@ fun FloatingNavigationBar(
                     .fillMaxWidth()
                     .height(96.dp)
                     .align(Alignment.BottomCenter)
-                    .padding(top = 8.dp)
                     .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                     .background(
                         Brush.verticalGradient(
