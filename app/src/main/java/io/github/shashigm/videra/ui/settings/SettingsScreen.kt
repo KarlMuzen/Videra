@@ -62,6 +62,9 @@ fun SettingsScreen(
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
                             count = themes.size
+                        ),
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         )
                     ) {
                         Text(label)
