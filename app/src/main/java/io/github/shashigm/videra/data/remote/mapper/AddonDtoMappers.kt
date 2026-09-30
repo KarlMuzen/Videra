@@ -1,10 +1,12 @@
 package io.github.shashigm.videra.data.remote.mapper
 
 import io.github.shashigm.videra.data.remote.dto.AddonManifestDto
+import io.github.shashigm.videra.data.remote.dto.EpisodeDto
 import io.github.shashigm.videra.data.remote.dto.MediaItemDto
 import io.github.shashigm.videra.data.remote.dto.MediaTypeDto
 import io.github.shashigm.videra.data.remote.dto.StreamDto
 import io.github.shashigm.videra.domain.model.AddonManifest
+import io.github.shashigm.videra.domain.model.Episode
 import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.model.MediaType
 import io.github.shashigm.videra.domain.model.Stream
@@ -28,13 +30,37 @@ fun AddonManifestDto.toDomain(): AddonManifest {
     )
 }
 
+fun EpisodeDto.toDomain(): Episode {
+    return Episode(
+        number = number,
+        title = title,
+        streams = streams.map(StreamDto::toDomain),
+        durationSeconds = durationSeconds
+    )
+}
+
 fun MediaItemDto.toDomain(): MediaItem {
+    val mediaType = type.toDomain()
+    val explicitEpisodes = episodes
+        .map(EpisodeDto::toDomain)
+        .sortedBy(Episode::number)
+
+    val resolvedEpisodes = if (
+        mediaType == MediaType.MICRO_DRAMA && explicitEpisodes.isEmpty()
+    ) {
+        syntheticDramaEpisodes()
+    } else {
+        explicitEpisodes
+    }
+
     return MediaItem(
         id = id,
         title = title,
         posterUrl = posterUrl,
         bannerUrl = bannerUrl,
-        type = type.toDomain()
+        type = mediaType,
+        streams = streams.map(StreamDto::toDomain),
+        episodes = resolvedEpisodes
     )
 }
 
@@ -45,3 +71,23 @@ fun StreamDto.toDomain(): Stream {
         subtitles = subtitles
     )
 }
+
+private fun syntheticDramaEpisodes(): List<Episode> {
+    return (1..5).map { number ->
+        Episode(
+            number = number,
+            title = "Episode " + number,
+            streams = listOf(
+                Stream(
+                    url = BIG_BUCK_BUNNY_STREAM_URL,
+                    quality = "Development test stream",
+                    subtitles = emptyList()
+                )
+            ),
+            durationSeconds = 60L
+        )
+    }
+}
+
+private const val BIG_BUCK_BUNNY_STREAM_URL =
+    "https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4"
