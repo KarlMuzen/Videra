@@ -40,26 +40,3 @@ fun LibraryEntity.toDomain(): LibraryItem {
         savedAt = savedAt
     )
 }
-
-fun LibraryItem.toEntity(): LibraryEntity {
-    val stream = mediaItem.streams.firstOrNull()
-
-    return LibraryEntity(
-        libraryKey = libraryKey,
-        addonId = addonId,
-        addonName = addonName,
-        mediaId = mediaItem.id,
-        title = mediaItem.title,
-        posterUrl = mediaItem.posterUrl,
-        bannerUrl = mediaItem.bannerUrl,
-        mediaType = mediaItem.type.name,
-        streamUrl = stream?.url,
-        streamQuality = stream?.quality,
-        savedAt = savedAt
-    )
-}
-
-fun InstalledAddonLibraryKey(
-    addonId: String,
-    mediaId: String
-): String = "$addonId::$mediaId"
