@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "io.github.shashigm.videra"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.github.shashigm.videra"
