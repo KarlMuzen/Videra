@@ -229,7 +229,7 @@ fun MainScaffold(
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     appTheme = appTheme,
-                    onThemeChanged = preferencesRepository::setAppTheme,
+                    onThemeChanged = preferencesRepository::setTheme,
                     onManageAddons = {
                         navController.navigate(Screen.AddonManager.route) {
                             launchSingleTop = true
