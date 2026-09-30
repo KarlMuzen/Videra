@@ -66,7 +66,8 @@ fun LibraryScreen(
             LibraryUiState.Empty -> {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .weight(1f)
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
