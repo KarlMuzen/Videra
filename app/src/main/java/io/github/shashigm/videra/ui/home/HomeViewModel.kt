@@ -41,9 +41,9 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val installedAddons: StateFlow<List<InstalledAddon>> =
+    private val enabledAddons: StateFlow<List<InstalledAddon>> =
         repository
-            .observeInstalledAddons()
+            .observeEnabledAddons()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -52,7 +52,7 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
-            combine(installedAddons, refreshKey) { addons, _ ->
+            combine(enabledAddons, refreshKey) { addons, _ ->
                 addons
             }.collectLatest { addons ->
                 _uiState.value = HomeUiState.Loading
@@ -102,7 +102,7 @@ class HomeViewModelFactory(
         }
 
         throw IllegalArgumentException(
-            "Unknown ViewModel class: ${modelClass.name}"
+            "Unknown ViewModel class: " + modelClass.name
         )
     }
 }
