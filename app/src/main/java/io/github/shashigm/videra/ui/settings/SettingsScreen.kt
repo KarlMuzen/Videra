@@ -126,13 +126,3 @@ fun SettingsScreen(
         }
     }
 }
-
-@Composable
-fun SettingsPreview() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Settings preview")
-    }
-}

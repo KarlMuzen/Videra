@@ -7,9 +7,6 @@ import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.model.MediaType
 import io.github.shashigm.videra.domain.model.Stream
 
-private const val BIG_BUCK_BUNNY_URL =
-    "https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4"
-
 fun LibraryEntity.toDomain(): LibraryItem {
     val mediaType = MediaType.entries.firstOrNull { type ->
         type.name == this.mediaType
@@ -29,24 +26,7 @@ fun LibraryEntity.toDomain(): LibraryItem {
         }
         ?: emptyList()
 
-    val episodes = if (mediaType == MediaType.MICRO_DRAMA) {
-        (1..5).map { number ->
-            Episode(
-                number = number,
-                title = "Episode " + number,
-                streams = listOf(
-                    Stream(
-                        url = BIG_BUCK_BUNNY_URL,
-                        quality = "Development test stream",
-                        subtitles = emptyList()
-                    )
-                ),
-                durationSeconds = 60L
-            )
-        }
-    } else {
-        emptyList()
-    }
+    val episodes = emptyList<Episode>()
 
     return LibraryItem(
         libraryKey = libraryKey,

@@ -45,22 +45,14 @@ fun MediaItemDto.toDomain(): MediaItem {
         .map(EpisodeDto::toDomain)
         .sortedBy(Episode::number)
 
-    val resolvedEpisodes = if (
-        mediaType == MediaType.MICRO_DRAMA && explicitEpisodes.isEmpty()
-    ) {
-        syntheticDramaEpisodes()
-    } else {
-        explicitEpisodes
-    }
 
-    return MediaItem(
         id = id,
         title = title,
         posterUrl = posterUrl,
         bannerUrl = bannerUrl,
         type = mediaType,
         streams = streams.map(StreamDto::toDomain),
-        episodes = resolvedEpisodes
+        episodes = explicitEpisodes
     )
 }
 
@@ -71,23 +63,3 @@ fun StreamDto.toDomain(): Stream {
         subtitles = subtitles
     )
 }
-
-private fun syntheticDramaEpisodes(): List<Episode> {
-    return (1..5).map { number ->
-        Episode(
-            number = number,
-            title = "Episode " + number,
-            streams = listOf(
-                Stream(
-                    url = BIG_BUCK_BUNNY_STREAM_URL,
-                    quality = "Development test stream",
-                    subtitles = emptyList()
-                )
-            ),
-            durationSeconds = 60L
-        )
-    }
-}
-
-private const val BIG_BUCK_BUNNY_STREAM_URL =
-    "https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4"
