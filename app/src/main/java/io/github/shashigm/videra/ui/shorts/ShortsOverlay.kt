@@ -55,8 +55,12 @@ fun BoxScope.ShortsOverlay(
             .align(Alignment.BottomCenter)
             .fillMaxWidth()
             .safeDrawingPadding()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
-            .padding(bottom = 80.dp),
+            .padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = 100.dp
+            ),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(
