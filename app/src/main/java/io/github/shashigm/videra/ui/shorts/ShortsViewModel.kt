@@ -161,7 +161,8 @@ class ShortsViewModel(
 
             playerController.playEpisodes(
                 media = item.mediaItem,
-                startEpisodeIndex = startIndex
+                startEpisodeIndex = startIndex,
+                startPositionMs = progress?.positionMs ?: 0L
             )
         }
     }
