@@ -32,7 +32,8 @@ class CrashHandler private constructor(
             applicationContext
                 .getSystemService(Context.CLIPBOARD_SERVICE)
                 ?.let { service ->
-                    val clipboard = service as ClipboardManager
+                    val clipboard = service as? ClipboardManager
+                        ?: return@let
                     clipboard.setPrimaryClip(
                         ClipData.newPlainText(
                             "Videra crash trace",

@@ -1,6 +1,7 @@
 package io.github.shashigm.videra
 
 import io.github.shashigm.videra.di.VideraAppContainer
+import io.github.shashigm.videra.diagnostics.CrashHandler
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -48,7 +49,7 @@ class MainActivity : ComponentActivity() {
             isAppearanceLightNavigationBars = false
         }
 
-        val previousCrashLog = appContainer.preferencesRepository.lastCrashLog.value
+        val previousCrashLog = CrashHandler.getLastCrashLog(applicationContext)
 
         setContent {
             var showCrashDialog by remember {
