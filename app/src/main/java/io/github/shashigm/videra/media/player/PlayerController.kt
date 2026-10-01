@@ -116,21 +116,42 @@ class PlayerController(
         }
 
         if (episodes.isEmpty()) {
+            val stream = media.streams.firstOrNull()
+            if (stream == null) {
+                _state.value = PlayerState(
+                    playbackState = PlayerPlaybackState.ERROR,
+                    currentMedia = media,
+                    errorMessage = "No streams or episodes available for this title."
+                )
+                return
+            }
+
             playSingle(
                 media = media,
-                stream = media.streams.firstOrNull()
-                    ?: throw IllegalStateException("No streams available for this media"),
+                stream = stream,
                 startPositionMs = startPositionMs
             )
             return
         }
 
         val safeIndex = startEpisodeIndex.coerceIn(0, episodes.lastIndex)
+        val stream = episodeStream(media, episodes[safeIndex])
+        if (stream == null) {
+            _state.value = PlayerState(
+                playbackState = PlayerPlaybackState.ERROR,
+                currentMedia = media,
+                currentEpisodeIndex = safeIndex,
+                totalEpisodeCount = episodes.size,
+                errorMessage = "No stream is available for this episode or title."
+            )
+            return
+        }
+
         currentMedia = media
         currentEpisodes = episodes
         currentEpisodeIndex = safeIndex
         handledEndedEpisodeIndex = null
-        currentStream = episodeStream(media, episodes[safeIndex])
+        currentStream = stream
         loadCurrentStream(
             startPositionMs = startPositionMs.coerceAtLeast(0L)
         )
@@ -173,6 +194,25 @@ class PlayerController(
         if (!released) {
             exoPlayer.clearVideoSurface()
         }
+    }
+
+    fun setPlaybackError(
+        media: MediaItem,
+        message: String,
+        cause: Throwable? = null
+    ) {
+        _state.value = PlayerState(
+            playbackState = PlayerPlaybackState.ERROR,
+            currentMedia = media,
+            currentStream = currentStream,
+            currentEpisodeIndex = currentEpisodeIndex,
+            totalEpisodeCount = currentEpisodes.size,
+            currentPositionMs = if (released) 0L else exoPlayer.currentPosition.coerceAtLeast(0L),
+            errorMessage = message,
+            attemptedStreamUrl = currentStream?.url?.trim(),
+            errorCauseMessage = cause?.message ?: cause?.javaClass?.simpleName,
+            errorStackTrace = cause?.stackTraceToString()
+        )
     }
 
     fun retry() {
@@ -279,10 +319,21 @@ class PlayerController(
         val safeIndex = index.coerceIn(0, currentEpisodes.lastIndex)
         currentEpisodeIndex = safeIndex
         handledEndedEpisodeIndex = null
-        currentStream = episodeStream(
-            currentMedia ?: return,
-            currentEpisodes[safeIndex]
-        )
+
+        val media = currentMedia ?: return
+        val stream = episodeStream(media, currentEpisodes[safeIndex])
+        if (stream == null) {
+            _state.value = PlayerState(
+                playbackState = PlayerPlaybackState.ERROR,
+                currentMedia = media,
+                currentEpisodeIndex = safeIndex,
+                totalEpisodeCount = currentEpisodes.size,
+                errorMessage = "No stream is available for this episode or title."
+            )
+            return
+        }
+
+        currentStream = stream
         loadCurrentStream(startPositionMs = 0L)
     }
 
@@ -291,6 +342,17 @@ class PlayerController(
         stream: Stream,
         startPositionMs: Long
     ) {
+        if (stream.url.isBlank()) {
+            _state.value = PlayerState(
+                playbackState = PlayerPlaybackState.ERROR,
+                currentMedia = media,
+                currentStream = stream,
+                errorMessage = "Stream URL is blank for this title.",
+                attemptedStreamUrl = stream.url
+            )
+            return
+        }
+
         currentMedia = media
         currentEpisodes = emptyList()
         currentEpisodeIndex = null
@@ -304,10 +366,9 @@ class PlayerController(
     private fun episodeStream(
         media: MediaItem,
         episode: Episode
-    ): Stream {
+    ): Stream? {
         return episode.streams.firstOrNull()
             ?: media.streams.firstOrNull()
-            ?: throw IllegalStateException("No streams available for this media")
     }
 
     private fun loadCurrentStream(

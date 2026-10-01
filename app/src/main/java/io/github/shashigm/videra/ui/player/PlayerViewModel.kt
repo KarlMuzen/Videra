@@ -204,49 +204,62 @@ class PlayerViewModel(
         addonName: String,
         mediaItem: MediaItem
     ) {
-        if (mediaItem.type != MediaType.MICRO_DRAMA) {
-            return
-        }
+        try {
+            if (mediaItem.type != MediaType.MICRO_DRAMA) {
+                return
+            }
 
-        _selection.value = PlayerSelection(
-            addonId = addonId,
-            addonName = addonName,
-            mediaItem = mediaItem
-        )
-
-        val progress = try {
-            episodeProgressRepository.getProgress(
+            _selection.value = PlayerSelection(
                 addonId = addonId,
-                mediaId = mediaItem.id
+                addonName = addonName,
+                mediaItem = mediaItem
+            )
+
+            val progress = try {
+                episodeProgressRepository.getProgress(
+                    addonId = addonId,
+                    mediaId = mediaItem.id
+                )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
+            }
+
+            if (mediaItem.episodes.isEmpty()) {
+                playerController.playEpisodes(
+                    media = mediaItem,
+                    startPositionMs = progress?.positionMs ?: 0L
+                )
+                return
+            }
+
+            val startIndex = progress
+                ?.let { saved ->
+                    mediaItem.episodes.indexOfFirst { episode ->
+                        episode.number == saved.lastWatchedEpisodeNumber
+                    }
+                }
+                ?.takeIf { it >= 0 }
+                ?: 0
+
+            playerController.playEpisodes(
+                media = mediaItem,
+                startEpisodeIndex = startIndex,
+                startPositionMs = progress?.positionMs ?: 0L
             )
         } catch (exception: CancellationException) {
             throw exception
-        } catch (_: Exception) {
-            null
-        }
-
-        if (mediaItem.episodes.isEmpty()) {
-            playerController.playEpisodes(
+        } catch (exception: Exception) {
+            playerController.setPlaybackError(
                 media = mediaItem,
-                startPositionMs = progress?.positionMs ?: 0L
+                message = exception.message
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { "Unable to start playback: $it" }
+                    ?: "Unable to start playback due to an unexpected error.",
+                cause = exception
             )
-            return
         }
-
-        val startIndex = progress
-            ?.let { saved ->
-                mediaItem.episodes.indexOfFirst { episode ->
-                    episode.number == saved.lastWatchedEpisodeNumber
-                }
-            }
-            ?.takeIf { it >= 0 }
-            ?: 0
-
-        playerController.playEpisodes(
-            media = mediaItem,
-            startEpisodeIndex = startIndex,
-            startPositionMs = progress?.positionMs ?: 0L
-        )
     }
 
     private suspend fun saveCurrentProgress() {
