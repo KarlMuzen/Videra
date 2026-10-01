@@ -76,6 +76,7 @@ fun PlayerScreen(
                 currentEpisodeIndex = state.currentEpisodeIndex
                     ?.coerceIn(0, episodes.lastIndex.coerceAtLeast(0))
                     ?: 0,
+                playbackState = state.playbackState,
                 onPrevious = viewModel::previousEpisode,
                 onNext = viewModel::nextEpisode,
                 onEpisodeSelected = viewModel::selectEpisode
