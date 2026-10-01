@@ -191,6 +191,10 @@ class PlayerViewModel(
         playerController.pause()
     }
 
+    fun resume() {
+        playerController.resume()
+    }
+
     fun retry() {
         playerController.retry()
     }
