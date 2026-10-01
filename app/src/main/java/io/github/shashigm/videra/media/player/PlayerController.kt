@@ -273,7 +273,19 @@ class PlayerController(
     }
 
     private fun createExoPlayer(): ExoPlayer {
-        return ExoPlayer.Builder(applicationContext).build()
+        val httpDataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+            .setUserAgent("Videra/1.0 (Android; Mobile)")
+            .setConnectTimeoutMs(15_000)
+            .setReadTimeoutMs(20_000)
+            .setAllowCrossProtocolRedirects(true)
+
+        val mediaSourceFactory =
+            androidx.media3.exoplayer.source.DefaultMediaSourceFactory(applicationContext)
+                .setDataSourceFactory(httpDataSourceFactory)
+
+        return ExoPlayer.Builder(applicationContext)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build()
     }
 
     private fun configureAudioFocus() {

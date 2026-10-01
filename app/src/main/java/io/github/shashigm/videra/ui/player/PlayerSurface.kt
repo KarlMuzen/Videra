@@ -19,7 +19,7 @@ fun PlayerSurface(
         factory = { context ->
             PlayerView(context).apply {
                 this.player = player
-                useController = true
+                useController = false
                 resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                 setKeepContentOnPlayerReset(false)
                 setShutterBackgroundColor(android.graphics.Color.BLACK)
