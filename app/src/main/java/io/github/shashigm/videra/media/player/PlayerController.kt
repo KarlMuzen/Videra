@@ -274,9 +274,9 @@ class PlayerController(
 
     private fun createExoPlayer(): ExoPlayer {
         val httpDataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
-            .setUserAgent("Videra/1.0 (Android; Mobile)")
-            .setConnectTimeoutMs(15_000)
-            .setReadTimeoutMs(20_000)
+            .setUserAgent("Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36")
+            .setConnectTimeoutMs(20_000)
+            .setReadTimeoutMs(25_000)
             .setAllowCrossProtocolRedirects(true)
 
         val mediaSourceFactory =
@@ -422,14 +422,32 @@ class PlayerController(
             media.title + " • EP. " + it.number
         } ?: media.title
 
-        val mediaItem = Media3MediaItem.Builder()
+        val mimeType = when {
+            normalizedUrl.contains(".m3u8", ignoreCase = true) ->
+                androidx.media3.common.MimeTypes.APPLICATION_M3U8
+
+            normalizedUrl.contains(".mp4", ignoreCase = true) ->
+                androidx.media3.common.MimeTypes.APPLICATION_MP4
+
+            normalizedUrl.contains(".mpd", ignoreCase = true) ->
+                androidx.media3.common.MimeTypes.APPLICATION_MPD
+
+            else -> null
+        }
+
+        val mediaItemBuilder = Media3MediaItem.Builder()
             .setUri(uri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(title)
                     .build()
             )
-            .build()
+
+        if (mimeType != null) {
+            mediaItemBuilder.setMimeType(mimeType)
+        }
+
+        val mediaItem = mediaItemBuilder.build()
 
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()

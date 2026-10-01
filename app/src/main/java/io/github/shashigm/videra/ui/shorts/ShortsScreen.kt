@@ -1,6 +1,7 @@
 package io.github.shashigm.videra.ui.shorts
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
@@ -138,7 +142,15 @@ private fun ShortsPager(
         if (playerMatchesActiveItem) {
             PlayerSurface(
                 player = playerViewModel.player,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable {
+                        if (playerViewModel.player.isPlaying) {
+                            playerViewModel.pause()
+                        } else {
+                            playerViewModel.resume()
+                        }
+                    }
             )
 
             when (playerState.playbackState) {
@@ -153,23 +165,43 @@ private fun ShortsPager(
                     Card(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .padding(24.dp)
+                            .fillMaxWidth()
+                            .padding(20.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Playback error",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = playerState.errorMessage
-                                    ?: "Video playback failed.",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Button(onClick = playerViewModel::retry) {
-                                Text("Retry")
+                        SelectionContainer {
+                            Column(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Playback error",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = playerState.errorMessage
+                                        ?: "Video playback failed.",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = "Stream URL: " +
+                                        (playerState.attemptedStreamUrl ?: "Unavailable"),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = "Media3 error code: " +
+                                        (playerState.errorCodeName ?: "Unavailable"),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = "Exception message: " +
+                                        (playerState.errorCauseMessage ?: "Unavailable"),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Button(onClick = playerViewModel::retry) {
+                                    Text("Retry")
+                                }
                             }
                         }
                     }
@@ -204,6 +236,7 @@ private fun ShortsPager(
                 addonName = item.addon.name,
                 episodes = episodes,
                 currentEpisodeIndex = currentEpisodeIndex,
+                playbackState = playerState.playbackState,
                 onPrevious = playerViewModel::previousEpisode,
                 onNext = playerViewModel::nextEpisode,
                 onEpisodeSelected = playerViewModel::selectEpisode
