@@ -1,5 +1,8 @@
 package io.github.shashigm.videra
 
+import io.github.shashigm.videra.di.VideraAppContainer
+import io.github.shashigm.videra.diagnostics.CrashHandler
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.os.Bundle
@@ -25,20 +28,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.view.WindowCompat
-import io.github.shashigm.videra.diagnostics.CrashHandler
-import io.github.shashigm.videra.di.VideraAppContainer
 import io.github.shashigm.videra.ui.navigation.MainScaffold
 import io.github.shashigm.videra.ui.theme.VideraTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val appContainer by lazy {
-        VideraAppContainer(applicationContext)
-    }
+    private val appContainer: VideraAppContainer
+        get() = (application as VideraApplication).container
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        CrashHandler.install(applicationContext)
-
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()

@@ -2,6 +2,8 @@ package io.github.shashigm.videra.media.player
 
 import android.content.Context
 import android.net.Uri
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem as Media3MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
@@ -10,6 +12,14 @@ import androidx.media3.exoplayer.ExoPlayer
 import io.github.shashigm.videra.domain.model.Episode
 import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.model.Stream
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -69,6 +79,8 @@ class PlayerController(
     private var currentEpisodeIndex: Int? = null
     private var handledEndedEpisodeIndex: Int? = null
     private var released = false
+    private var playbackScope = createPlaybackScope()
+    private var progressPollingJob: Job? = null
 
     private val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -85,7 +97,9 @@ class PlayerController(
     }
 
     init {
+        configureAudioFocus()
         exoPlayer.addListener(listener)
+        startProgressPolling()
     }
 
     val player: Player
@@ -104,7 +118,8 @@ class PlayerController(
         if (episodes.isEmpty()) {
             playSingle(
                 media = media,
-                stream = media.streams.firstOrNull() ?: BIG_BUCK_BUNNY_STREAM,
+                stream = media.streams.firstOrNull()
+                    ?: throw IllegalStateException("No streams available for this media"),
                 startPositionMs = startPositionMs
             )
             return
@@ -203,6 +218,9 @@ class PlayerController(
         }
 
         released = true
+        progressPollingJob?.cancel()
+        progressPollingJob = null
+        playbackScope.cancel()
         exoPlayer.removeListener(listener)
         exoPlayer.release()
 
@@ -218,11 +236,39 @@ class PlayerController(
         return ExoPlayer.Builder(applicationContext).build()
     }
 
+    private fun configureAudioFocus() {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+            .build()
+
+        exoPlayer.setAudioAttributes(audioAttributes, true)
+    }
+
+    private fun createPlaybackScope(): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    }
+
+    private fun startProgressPolling() {
+        progressPollingJob?.cancel()
+        progressPollingJob = playbackScope.launch {
+            while (isActive) {
+                delay(1000L)
+                if (!released && exoPlayer.isPlaying) {
+                    syncState()
+                }
+            }
+        }
+    }
+
     private fun reinitializePlayer() {
+        playbackScope = createPlaybackScope()
         exoPlayer = createExoPlayer()
+        configureAudioFocus()
         exoPlayer.addListener(listener)
         released = false
         _state.value = PlayerState()
+        startProgressPolling()
     }
 
     private fun playEpisodeAt(index: Int) {
@@ -261,7 +307,7 @@ class PlayerController(
     ): Stream {
         return episode.streams.firstOrNull()
             ?: media.streams.firstOrNull()
-            ?: BIG_BUCK_BUNNY_STREAM
+            ?: throw IllegalStateException("No streams available for this media")
     }
 
     private fun loadCurrentStream(
@@ -407,14 +453,7 @@ class PlayerController(
         handledEndedEpisodeIndex = index
 
         val episode = currentEpisodes[index]
-        val knownDurationMs = episode.durationSeconds
-            ?.coerceAtLeast(0L)
-            ?.times(1000L)
-            ?: 0L
-        val completedPositionMs = maxOf(
-            exoPlayer.currentPosition.coerceAtLeast(0L),
-            knownDurationMs
-        )
+        val completedPositionMs = 0L
 
         _events.tryEmit(
             PlayerEvent.EpisodeCompleted(
@@ -440,10 +479,6 @@ class PlayerController(
 
     private companion object {
         val HTTP_SCHEMES = setOf("http", "https")
-        val BIG_BUCK_BUNNY_STREAM = Stream(
-            url = "https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4",
-            quality = "Development test stream",
-            subtitles = emptyList()
-        )
+
     }
 }

@@ -1,5 +1,7 @@
 package io.github.shashigm.videra.diagnostics
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.SharedPreferences
 import java.io.PrintWriter
@@ -10,8 +12,10 @@ class CrashHandler private constructor(
     private val delegate: Thread.UncaughtExceptionHandler?
 ) : Thread.UncaughtExceptionHandler {
 
+    private val applicationContext = context.applicationContext
+
     private val sharedPreferences: SharedPreferences =
-        context.applicationContext.getSharedPreferences(
+        applicationContext.getSharedPreferences(
             PREFS_NAME,
             Context.MODE_PRIVATE
         )
@@ -20,10 +24,28 @@ class CrashHandler private constructor(
         thread: Thread,
         throwable: Throwable
     ) {
-        try {
-            val writer = StringWriter()
-            throwable.printStackTrace(PrintWriter(writer))
+        val writer = StringWriter()
+        throwable.printStackTrace(PrintWriter(writer))
+        val stackTrace = writer.toString()
 
+        try {
+            applicationContext
+                .getSystemService(Context.CLIPBOARD_SERVICE)
+                ?.let { service ->
+                    val clipboard = service as? ClipboardManager
+                        ?: return@let
+                    clipboard.setPrimaryClip(
+                        ClipData.newPlainText(
+                            "Videra crash trace",
+                            stackTrace
+                        )
+                    )
+                }
+        } catch (_: Throwable) {
+            // Clipboard capture must never suppress process termination.
+        }
+
+        try {
             val log = buildString {
                 append("Timestamp: ")
                 append(System.currentTimeMillis())
@@ -37,7 +59,7 @@ class CrashHandler private constructor(
                 append(throwable.message.orEmpty())
                 append('\n')
                 append('\n')
-                append(writer.toString())
+                append(stackTrace)
             }
 
             // commit() is intentional because the process may terminate
@@ -46,14 +68,14 @@ class CrashHandler private constructor(
                 .putString(KEY_LAST_CRASH_LOG, log)
                 .commit()
         } catch (_: Throwable) {
-            // Crash logging must never prevent the platform handler from running.
+            // Crash logging must never prevent process termination.
         }
 
-        delegate?.uncaughtException(thread, throwable)
-            ?: run {
-                android.os.Process.killProcess(android.os.Process.myPid())
-                kotlin.system.exitProcess(10)
-            }
+        try {
+            delegate?.uncaughtException(thread, throwable)
+        } finally {
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }
     }
 
     companion object {

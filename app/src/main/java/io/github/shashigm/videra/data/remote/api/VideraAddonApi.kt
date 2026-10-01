@@ -3,7 +3,6 @@ package io.github.shashigm.videra.data.remote.api
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import io.github.shashigm.videra.data.remote.dto.AddonManifestDto
 import io.github.shashigm.videra.data.remote.dto.MediaItemDto
-import io.github.shashigm.videra.data.remote.dto.StreamDto
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -22,11 +21,6 @@ interface VideraAddonApi {
     suspend fun getMediaItems(
         @Url url: String
     ): List<MediaItemDto>
-
-    @GET
-    suspend fun getStreams(
-        @Url url: String
-    ): List<StreamDto>
 
     companion object {
         fun create(

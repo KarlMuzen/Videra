@@ -9,9 +9,10 @@ import io.github.shashigm.videra.domain.model.MediaItem
 import io.github.shashigm.videra.domain.model.MediaType
 import io.github.shashigm.videra.domain.repository.LibraryRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -22,26 +23,35 @@ sealed interface LibraryUiState {
     data class Success(
         val items: List<LibraryItem>
     ) : LibraryUiState
+
+    data class Error(val message: String) : LibraryUiState
 }
 
 class LibraryViewModel(
     private val repository: LibraryRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<LibraryUiState> =
-        repository
-            .observeSavedItems()
-            .map { items ->
-                val microDramas = items.filter { item ->
-                    item.mediaItem.type == MediaType.MICRO_DRAMA
-                }
+    private val _mutationError = MutableStateFlow<String?>(null)
 
-                if (microDramas.isEmpty()) {
-                    LibraryUiState.Empty
-                } else {
-                    LibraryUiState.Success(microDramas)
-                }
+    val uiState: StateFlow<LibraryUiState> =
+        combine(
+            repository.observeSavedItems(),
+            _mutationError
+        ) { items, errorMessage ->
+            if (!errorMessage.isNullOrBlank()) {
+                return@combine LibraryUiState.Error(errorMessage)
             }
+
+            val microDramas = items.filter { item ->
+                item.mediaItem.type == MediaType.MICRO_DRAMA
+            }
+
+            if (microDramas.isEmpty()) {
+                LibraryUiState.Empty
+            } else {
+                LibraryUiState.Success(microDramas)
+            }
+        }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -58,12 +68,17 @@ class LibraryViewModel(
 
         viewModelScope.launch {
             try {
+                _mutationError.value = null
                 repository.save(
                     addon = addon,
                     mediaItem = mediaItem
                 )
             } catch (exception: CancellationException) {
                 throw exception
+            } catch (exception: Exception) {
+                _mutationError.value = exception.message
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Unable to save this micro-drama."
             }
         }
     }
@@ -71,9 +86,14 @@ class LibraryViewModel(
     fun remove(libraryKey: String) {
         viewModelScope.launch {
             try {
+                _mutationError.value = null
                 repository.remove(libraryKey)
             } catch (exception: CancellationException) {
                 throw exception
+            } catch (exception: Exception) {
+                _mutationError.value = exception.message
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "Unable to remove this micro-drama."
             }
         }
     }

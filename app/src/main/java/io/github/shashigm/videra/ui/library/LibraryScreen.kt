@@ -91,6 +91,12 @@ fun LibraryScreen(
                 }
             }
 
+            is LibraryUiState.Error -> {
+                Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(24.dp), contentAlignment = Alignment.Center) {
+                    Text(text = state.message, color = MaterialTheme.colorScheme.error)
+                }
+            }
+
             is LibraryUiState.Success -> {
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 140.dp),
