@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.view.WindowCompat
-import io.github.shashigm.videra.diagnostics.CrashHandler
 import io.github.shashigm.videra.ui.navigation.MainScaffold
 import io.github.shashigm.videra.ui.theme.VideraTheme
 
@@ -37,8 +36,6 @@ class MainActivity : ComponentActivity() {
         get() = (application as VideraApplication).container
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        CrashHandler.install(applicationContext)
-
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
@@ -51,7 +48,7 @@ class MainActivity : ComponentActivity() {
             isAppearanceLightNavigationBars = false
         }
 
-        val previousCrashLog = CrashHandler.getLastCrashLog(applicationContext)
+        val previousCrashLog = appContainer.preferencesRepository.lastCrashLog.value
 
         setContent {
             var showCrashDialog by remember {
