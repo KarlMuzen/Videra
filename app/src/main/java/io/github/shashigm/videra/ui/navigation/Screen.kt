@@ -76,11 +76,12 @@ sealed class Screen(
     )
 
     companion object {
-        val topLevelDestinations: List<Screen> = listOf(
-            Feed,
-            Discover,
-            Library,
-            Settings
-        )
+        val topLevelDestinations: List<Screen>
+            get() = listOf(
+                Feed,
+                Discover,
+                Library,
+                Settings
+            )
     }
 }

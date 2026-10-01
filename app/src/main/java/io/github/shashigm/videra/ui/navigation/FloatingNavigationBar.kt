@@ -72,7 +72,7 @@ fun FloatingNavigationBar(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Screen.topLevelDestinations.forEach { screen ->
+                Screen.topLevelDestinations.filterNotNull().forEach { screen ->
                     val selected = currentDestination
                         ?.hierarchy
                         ?.any { it.route == screen.route } == true
@@ -87,14 +87,15 @@ fun FloatingNavigationBar(
     }
 }
 
-
 @Composable
 private fun CompactNavigationItem(
-    screen: Screen,
+    screen: Screen?,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val navigationScreen = screen ?: return
+
     Column(
         modifier = modifier
             .height(52.dp)
@@ -113,11 +114,11 @@ private fun CompactNavigationItem(
     ) {
         Icon(
             imageVector = if (selected) {
-                screen.filledIcon
+                navigationScreen.filledIcon
             } else {
-                screen.outlinedIcon
+                navigationScreen.outlinedIcon
             },
-            contentDescription = screen.label,
+            contentDescription = navigationScreen.label,
             modifier = Modifier.size(22.dp),
             tint = if (selected) {
                 Color.White
@@ -126,7 +127,7 @@ private fun CompactNavigationItem(
             }
         )
         Text(
-            text = screen.label,
+            text = navigationScreen.label,
             color = if (selected) {
                 Color.White
             } else {
