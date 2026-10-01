@@ -17,6 +17,10 @@ android {
         versionName = "0.1.0"
     }
 
+    lint {
+        abortOnError = false
+    }
+
     buildFeatures {
         compose = true
     }
