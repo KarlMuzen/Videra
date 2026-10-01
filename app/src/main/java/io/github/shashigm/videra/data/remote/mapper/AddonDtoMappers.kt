@@ -45,7 +45,7 @@ fun MediaItemDto.toDomain(): MediaItem {
         .map(EpisodeDto::toDomain)
         .sortedBy(Episode::number)
 
-
+    return MediaItem(
         id = id,
         title = title,
         posterUrl = posterUrl,

@@ -22,7 +22,7 @@ interface VideraAddonApi {
         @Url url: String
     ): List<MediaItemDto>
 
- {
+    companion object {
         fun create(
             httpClient: OkHttpClient = OkHttpClient(),
             json: Json = Json {
