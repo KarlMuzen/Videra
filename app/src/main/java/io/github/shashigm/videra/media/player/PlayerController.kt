@@ -422,14 +422,29 @@ class PlayerController(
             media.title + " • EP. " + it.number
         } ?: media.title
 
-        val mediaItem = Media3MediaItem.Builder()
+        val mimeType = when {
+            normalizedUrl.contains(".m3u8", ignoreCase = true) ->
+                androidx.media3.common.MimeTypes.APPLICATION_M3U8
+
+            normalizedUrl.contains(".mp4", ignoreCase = true) ->
+                androidx.media3.common.MimeTypes.APPLICATION_MP4
+
+            else -> null
+        }
+
+        val mediaItemBuilder = Media3MediaItem.Builder()
             .setUri(uri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(title)
                     .build()
             )
-            .build()
+
+        if (mimeType != null) {
+            mediaItemBuilder.setMimeType(mimeType)
+        }
+
+        val mediaItem = mediaItemBuilder.build()
 
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()

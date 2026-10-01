@@ -37,6 +37,9 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val refreshKey = MutableStateFlow(0)
+    private var cachedAddonIds: List<String>? = null
+    private var cachedFeed: HomeFeed? = null
+    private var cachedRefreshKey = Int.MIN_VALUE
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -52,9 +55,30 @@ class HomeViewModel(
 
     init {
         viewModelScope.launch {
-            combine(enabledAddons, refreshKey) { addons, _ ->
-                addons
-            }.collectLatest { addons ->
+            combine(enabledAddons, refreshKey) { addons, refreshRequest ->
+                addons to refreshRequest
+            }.collectLatest { (addons, refreshRequest) ->
+                val addonIds = addons.map { it.id }
+                val cached = cachedFeed
+
+                if (
+                    cached != null &&
+                    cachedAddonIds == addonIds &&
+                    cachedRefreshKey == refreshRequest
+                ) {
+                    _uiState.value = when {
+                        cached.sections.isNotEmpty() ||
+                            cached.failures.isNotEmpty() -> {
+                            HomeUiState.Success(cached)
+                        }
+
+                        else -> {
+                            HomeUiState.Empty
+                        }
+                    }
+                    return@collectLatest
+                }
+
                 _uiState.value = HomeUiState.Loading
 
                 when (val result = getHomeFeed(addons)) {
@@ -62,6 +86,9 @@ class HomeViewModel(
 
                     is Resource.Success -> {
                         val feed = result.data
+                        cachedFeed = feed
+                        cachedAddonIds = addonIds
+                        cachedRefreshKey = refreshRequest
                         _uiState.value = when {
                             feed.sections.isNotEmpty() ||
                                 feed.failures.isNotEmpty() -> {

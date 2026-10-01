@@ -42,6 +42,9 @@ class ShortsViewModel(
 ) : ViewModel() {
 
     private val refreshKey = MutableStateFlow(0)
+    private var cachedAddonIds: List<String>? = null
+    private var cachedFeed: ShortsFeed? = null
+    private var cachedRefreshKey = Int.MIN_VALUE
 
     private val _uiState = MutableStateFlow<ShortsUiState>(ShortsUiState.Loading)
     val uiState: StateFlow<ShortsUiState> = _uiState.asStateFlow()
@@ -57,9 +60,33 @@ class ShortsViewModel(
 
     init {
         viewModelScope.launch {
-            combine(enabledAddons, refreshKey) { addons, _ ->
-                addons
-            }.collectLatest { addons ->
+            combine(enabledAddons, refreshKey) { addons, refreshRequest ->
+                addons to refreshRequest
+            }.collectLatest { (addons, refreshRequest) ->
+                val addonIds = addons.map { it.id }
+                val cached = cachedFeed
+
+                if (
+                    cached != null &&
+                    cachedAddonIds == addonIds &&
+                    cachedRefreshKey == refreshRequest
+                ) {
+                    _uiState.value = when {
+                        cached.items.isNotEmpty() -> {
+                            ShortsUiState.Success(cached)
+                        }
+
+                        cached.failures.isNotEmpty() -> {
+                            ShortsUiState.Empty(cached.failures)
+                        }
+
+                        else -> {
+                            ShortsUiState.Empty()
+                        }
+                    }
+                    return@collectLatest
+                }
+
                 _uiState.value = ShortsUiState.Loading
 
                 when (val result = getShortsFeed(addons)) {
@@ -67,6 +94,9 @@ class ShortsViewModel(
 
                     is Resource.Success -> {
                         val feed = result.data
+                        cachedFeed = feed
+                        cachedAddonIds = addonIds
+                        cachedRefreshKey = refreshRequest
                         _uiState.value = when {
                             feed.items.isNotEmpty() -> {
                                 ShortsUiState.Success(feed)

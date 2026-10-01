@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material.icons.outlined.SkipPrevious
@@ -37,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.shashigm.videra.domain.model.Episode
+import io.github.shashigm.videra.media.player.PlayerPlaybackState
 
 @Composable
 fun BoxScope.ShortsOverlay(
@@ -44,11 +48,30 @@ fun BoxScope.ShortsOverlay(
     addonName: String,
     episodes: List<Episode>,
     currentEpisodeIndex: Int,
+    playbackState: PlayerPlaybackState,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onEpisodeSelected: (Int) -> Unit
 ) {
     var showEpisodeSheet by remember { mutableStateOf(false) }
+
+    if (playbackState == PlayerPlaybackState.PAUSED) {
+        Surface(
+            modifier = Modifier.align(Alignment.Center),
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.36f),
+            contentColor = Color.White
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "Resume playback",
+                modifier = Modifier
+                    .size(64.dp)
+                    .padding(8.dp),
+                tint = Color.White.copy(alpha = 0.92f)
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -89,23 +112,28 @@ fun BoxScope.ShortsOverlay(
                 )
             }
 
-            OverlayControl(
-                enabled = currentEpisodeIndex > 0,
-                contentDescription = "Previous episode",
-                onClick = onPrevious,
-                image = Icons.Outlined.SkipPrevious
-            )
+            if (playbackState != PlayerPlaybackState.ERROR) {
+                OverlayControl(
+                    enabled = currentEpisodeIndex > 0,
+                    contentDescription = "Previous episode",
+                    onClick = onPrevious,
+                    image = Icons.Outlined.SkipPrevious
+                )
 
-            OverlayControl(
-                enabled = episodes.isNotEmpty() &&
-                    currentEpisodeIndex < episodes.lastIndex,
-                contentDescription = "Next episode",
-                onClick = onNext,
-                image = Icons.Outlined.SkipNext
-            )
+                OverlayControl(
+                    enabled = episodes.isNotEmpty() &&
+                        currentEpisodeIndex < episodes.lastIndex,
+                    contentDescription = "Next episode",
+                    onClick = onNext,
+                    image = Icons.Outlined.SkipNext
+                )
+            }
         }
 
-        if (episodes.isNotEmpty()) {
+        if (
+            episodes.isNotEmpty() &&
+            playbackState != PlayerPlaybackState.ERROR
+        ) {
             Surface(
                 onClick = { showEpisodeSheet = true },
                 shape = RoundedCornerShape(50),
@@ -134,7 +162,11 @@ fun BoxScope.ShortsOverlay(
         }
     }
 
-    if (showEpisodeSheet && episodes.isNotEmpty()) {
+    if (
+        showEpisodeSheet &&
+        episodes.isNotEmpty() &&
+        playbackState != PlayerPlaybackState.ERROR
+    ) {
         EpisodeBottomSheet(
             episodes = episodes,
             selectedIndex = currentEpisodeIndex,

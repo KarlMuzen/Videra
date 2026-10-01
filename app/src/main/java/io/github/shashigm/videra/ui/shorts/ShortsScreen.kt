@@ -1,6 +1,7 @@
 package io.github.shashigm.videra.ui.shorts
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -138,7 +139,15 @@ private fun ShortsPager(
         if (playerMatchesActiveItem) {
             PlayerSurface(
                 player = playerViewModel.player,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable {
+                        if (playerViewModel.player.isPlaying) {
+                            playerViewModel.pause()
+                        } else {
+                            playerViewModel.resume()
+                        }
+                    }
             )
 
             when (playerState.playbackState) {
@@ -204,6 +213,7 @@ private fun ShortsPager(
                 addonName = item.addon.name,
                 episodes = episodes,
                 currentEpisodeIndex = currentEpisodeIndex,
+                playbackState = playerState.playbackState,
                 onPrevious = playerViewModel::previousEpisode,
                 onNext = playerViewModel::nextEpisode,
                 onEpisodeSelected = playerViewModel::selectEpisode
